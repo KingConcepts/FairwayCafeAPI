@@ -1,0 +1,29 @@
+{
+  "name": "fairwaycafe",
+  "version": "1.0.0",
+  "description": "API for data handling for the cafe ordering data, authenticating users, and etc. Back-end using NodeJS and MongoDB",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "ts-node ./src/server.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KingConcepts/FairwayCafeAPI.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/KingConcepts/FairwayCafeAPI/issues"
+  },
+  "homepage": "https://github.com/KingConcepts/FairwayCafeAPI#readme",
+  "dependencies": {
+    "@types/node": "^12.6.8",
+    "bcrypt": "^3.0.6",
+    "dotenv": "^8.0.0",
+    "express": "^4.17.1",
+    "mongoose": "^5.6.6",
+    "ts-node": "^8.3.0",
+    "typescript": "^3.5.3"
+  }
+}
