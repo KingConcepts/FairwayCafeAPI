@@ -2,6 +2,7 @@ import * as express from 'express';
 // import Controller from '../interfaces/controller.interface';
 import Post from './post.interface';
 import postModel from './posts.model';
+import authMiddleware from '../middleware/auth.middleware';
  
 class PostsController {
   public path = '/posts';
@@ -13,7 +14,7 @@ class PostsController {
   }
  
   private initializeRoutes() {
-    this.router.get(this.path, this.getAllPosts);
+    this.router.get(this.path, authMiddleware, this.getAllPosts);
     // this.router.get(`${this.path}/:id`, this.getPostById);
     // this.router.put(`${this.path}/:id`, this.modifyPost);
     // this.router.delete(`${this.path}/:id`, this.deletePost);

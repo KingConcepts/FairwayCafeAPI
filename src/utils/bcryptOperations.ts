@@ -18,6 +18,23 @@ export class BycryptOprations {
       }
     });
   };
+  
+  public comparePassword(userPassword, DBpassword) {
+    return new Promise((resolve, reject) => {
+      try{
+        bcrypt.compare(userPassword, DBpassword, function (err, isMatch) {
+          if (err) {
+              reject(err);
+          } else {
+              resolve(isMatch);
+          }
+      });
+      } catch (e) {
+        console.log('comparePassword', e);
+        reject(e);
+      }
+    })
+  }
 }
 
 export default new BycryptOprations;

@@ -4,11 +4,12 @@ import Controller from '../interfaces/controller.interface';
 // import RequestWithUser from '../interfaces/requestWithUser.interface';
 // import authMiddleware from '../middleware/auth.middleware';
 // import postModel from '../post/post.model';
-import userModel from './user.model';
+import userTokenModel from './userToken.model';
+import userModel from '../user/user.model';
 import bycryptOprations from '../utils/bcryptOperations';
 import authentication from '../utils/authentication';
 
-class UserController implements Controller {
+class UserTokenController implements Controller {
   public path = '/users';
   public router = express.Router();
   // private post = postModel;
@@ -18,8 +19,8 @@ class UserController implements Controller {
   }
 
   private initializeRoutes() {
-    // this.router.post(`/signup`, this.registration);
-    // this.router.post(`/login`, this.login);
+    this.router.post(`/signup`, this.registration);
+    this.router.post(`/login`, this.login);
   }
 
   private registration = async (req: express.Request, res: express.Response) => {
@@ -74,7 +75,11 @@ class UserController implements Controller {
       const isPasswordMatched = await bycryptOprations.comparePassword(req.body.password, user.password);
       if(isPasswordMatched){
         const token = await authentication.genratetoken(user._id);
-
+        const insertUpdateQuery = {
+          token
+        };
+        const result = await userTokenModel.findOneAndUpdate({_id: user._id}, insertUpdateQuery, { upsert: true, new: true });
+        console.log('result', result);
         res.json({
           status: 200,
           message: 'Loggedin Successfully',
@@ -98,4 +103,4 @@ class UserController implements Controller {
   }
 }
 
-export default UserController;
+export default UserTokenController;
