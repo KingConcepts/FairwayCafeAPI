@@ -1,5 +1,10 @@
-interface DataStoredInToken {
-  _id: string;
+interface IVerificationResponse {
+  id: string;
 }
 
-export default DataStoredInToken;
+interface IDataStoredInToken {
+  data: IVerificationResponse;
+  iat: number
+}
+
+export default IDataStoredInToken;

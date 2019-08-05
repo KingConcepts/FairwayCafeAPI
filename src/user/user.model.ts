@@ -42,7 +42,8 @@ const userSchema = new mongoose.Schema(
         location: { type: String, required: false },
         orgChartElig: { type: String, required: false },
         isRegistered: { type: Boolean, default: false },
-        password: { type: String, requied: false }
+        password: { type: String, requied: false },
+        username:{ type: String, required: false}
     },
     {
         strict: false,
@@ -52,6 +53,8 @@ const userSchema = new mongoose.Schema(
 );
 
 const User = mongoose.model<User & mongoose.Document>('Users', userSchema);
+
+
 export default User;
 // module.exports = mongoose.model('Users', userSchema);
 

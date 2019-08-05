@@ -1,6 +1,8 @@
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import * as mongoose from 'mongoose';
+import errorMiddleware from './middleware/error.middleware';
+
 class App {
   public app: express.Application;
   public port: number;
@@ -11,6 +13,7 @@ class App {
 
     this.connectToTheDatabase();
     this.initializeMiddlewares();
+    this.initializeErrorHandling();
     this.initializeControllers(controllers);
   }
 
@@ -23,13 +26,13 @@ class App {
       this.app.use('/', controller.router);
     });
   }
+
+  private initializeErrorHandling() {
+    this.app.use(errorMiddleware);
+  }
+
   private connectToTheDatabase() {
-    // const {
-    //   MONGO_USER,
-    //   MONGO_PASSWORD,
-    //   MONGO_PATH,
-    // } = process.env;
-    mongoose.connect(`mongodb://localhost/fairwayCafe`);
+    mongoose.connect(process.env.DB_STRING);
   }
   public listen() {
     this.app.listen(this.port, () => {

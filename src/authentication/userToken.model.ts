@@ -5,9 +5,9 @@ const userTokenSchema = new mongoose.Schema(
     {
         userId: { type: String, required: true },
         token: { type: String, required: true },
+        status: { type: String, required: true, enum: ['Active', 'Inactive'] },
     },
     {
-        strict: false,
         versionKey: false,
         timestamps: true,
     }

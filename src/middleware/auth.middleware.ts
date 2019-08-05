@@ -1,45 +1,67 @@
 import { NextFunction, Response } from 'express';
 
-import AuthenticationTokenMissingException from '../exceptions/AuthenticationTokenMissingException';
-import WrongAuthenticationTokenException from '../exceptions/WrongAuthenticationTokenException';
+import AuthenticationTokenMissingException from '../exception/AuthenticationTokenMissingException';
+import WrongAuthenticationTokenException from '../exception/WrongAuthenticationTokenException';
 import DataStoredInToken from '../interfaces/dataStoredInToken';
 import RequestWithUser from '../interfaces/requestWithUser.interface';
 import userModel from '../user/user.model';
+import userTokenModel from '../authentication/userToken.model';
 import authentication from '../utils/authentication';
+import ResponseBase from '../response/response.controller';
+import IDataStoredInToken from '../interfaces/dataStoredInToken';
 
 async function authMiddleware(req: Request, res: Response, next: NextFunction) {
-  const token = req.headers['authorization'];
-  if (token) {
-    try {
+  const responseBase = new ResponseBase();
+  try {
+    const token = req.headers['authorization'];
+    const tokenExpirationTime: number = Number(process.env.TOKEN_EXP_TIME);
+    // const tokenExpirationTime: number = 3000;
+    if (token) {
       const verificationResponse: any = await authentication.verifyToken(token);
       console.log('verificationResponse', verificationResponse);
-      const user = await userModel.findById(verificationResponse.data.id);
-      if (user) {
-        // req.user = user;
-        next();
+
+      /** Token should expire after 48 hours of inactivity
+       *  calculating 1 month hours from now
+       */
+      const currentTime: number = new Date().getTime();
+      const timeToExpire = (currentTime - tokenExpirationTime);
+      const userToken = await userTokenModel.findOne({ token, status: 'Active' });
+      console.log('userToken', userToken);
+      if (userToken && verificationResponse) {
+        const updatedAt: number = new Date(userToken.updatedAt).getTime();
+        if (updatedAt < timeToExpire) {
+          await userTokenModel.findOneAndUpdate({ token }, { status: 'Inactive' });
+          responseBase.invalidToken(res);
+
+        } else {
+          await userTokenModel.findOneAndUpdate({ token }, { status: 'Active' });
+          const user = await userModel.findById(verificationResponse.data.id, { 'companyCode2': 1, 'status': 1 });
+          if (user) {
+            console.log('user', user);
+            if ((user.companyCode2 === 'CGC' || user.companyCode2 === 'CGI' || user.companyCode2 === 'CGS')
+              && (user.status === '3')) {
+              // req.user = user;
+              next();
+            } else {
+              await userTokenModel.findOneAndUpdate({ token }, { status: 'Inactive' });
+              responseBase.invalidToken(res);
+            }
+          } else {
+            await userTokenModel.findOneAndUpdate({ token }, { status: 'Inactive' });
+            responseBase.invalidToken(res);
+          }
+        }
       } else {
-        return res.json({
-          status: 401,
-          message: 'Invalid token',
-          data: null
-        });
+        responseBase.invalidToken(res);
       }
-    } catch (error) {
-      return res.json({
-        status: 401,
-        message: 'Invalid token',
-        data: null
-      });
-      // next(new WrongAuthenticationTokenException());
+    } else {
+      responseBase.invalidToken(res);
     }
-  } else {
-    // next(new AuthenticationTokenMissingException());
-    return res.json({
-      status: 401,
-      message: 'Invalid token',
-      data: null
-    });
+  } catch (err) {
+    console.log(err);
+    responseBase.invalidToken(res);
   }
 }
+
 
 export default authMiddleware;
