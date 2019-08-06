@@ -1,4 +1,4 @@
-interface User {
+interface IUser {
   filler: String;
   empNumber: String;
   firstName: String;
@@ -41,4 +41,4 @@ interface User {
   password: String;
 };
 
-export default User;
+export default IUser;

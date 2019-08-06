@@ -11,9 +11,38 @@ export interface IUserData {
     company: String;
 };
 
+export interface ISubcategoryData {
+    _id: String;
+    categoryId: String;
+    name: String;
+    description: String;
+    imageURL: String;
+    status: Boolean
+}
+
+export interface ICategoryData {
+    _id: String;
+    name: String;
+    description: String;
+    imageURL: String;
+    status: Boolean
+}
+
+export interface IItemData {
+    _id: String;
+    name: String;
+    description: String;
+    imageURL: String;
+    status: Boolean;
+    price: Number;
+    quantity: Number;
+    subcategory: ISubcategoryData
+    category: ICategoryData
+}
+
 export interface IResponse {
-    res: express.Response
+    res: express.Response;
     status: Number;
     message: String;
-    data: IUserData
+    data: any;
 };

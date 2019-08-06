@@ -1,5 +1,5 @@
 import * as mongoose from 'mongoose';
-import UserToken from './userToken.interface';
+import IUserToken from './userToken.interface';
 
 const userTokenSchema = new mongoose.Schema(
     {
@@ -13,6 +13,6 @@ const userTokenSchema = new mongoose.Schema(
     }
 );
 
-const UserToken = mongoose.model<UserToken & mongoose.Document>('UserTokens', userTokenSchema);
+const UserToken = mongoose.model<IUserToken & mongoose.Document>('UserTokens', userTokenSchema);
 export default UserToken;
 // module.exports = mongoose.model('Users', userSchema);

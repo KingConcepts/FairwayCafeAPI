@@ -1,7 +1,7 @@
 import * as express from 'express';
 // import NotAuthorizedException from '../exceptions/NotAuthorizedException';
-// import RequestWithUser from '../interfaces/requestWithUser.interface';
-// import authMiddleware from '../middleware/auth.middleware';
+import RequestWithUser from '../interfaces/requestWithUser.interface';
+import authMiddleware from '../middleware/auth.middleware';
 // import postModel from '../post/post.model';
 import userTokenModel from './userToken.model';
 import userModel from '../user/user.model';
@@ -26,26 +26,27 @@ class Authentication extends RequestBase {
   private initializeRoutes() {
     this.router.post(`/signup`, this.registration);
     this.router.post(`/login`, this.login);
+    this.router.post(`/logout`, authMiddleware, this.logout);
   }
 
-  private registration = async (req: express.Request, res: express.Response) => {
+  private registration = async (req: RequestWithUser, res: express.Response) => {
     try {
       const getQueryParams = { email: req.body.email, empNumber: req.body.empCode };
       const userDetails = {
         'companyCode2': 1,
         'status': 1,
-        'empCode': 1,
         'email': 1,
         'firstName': 1,
         'lastName': 1,
-        'isRegistered': 1
+        'isRegistered': 1,
+        'empNumber': 1
       }
       const user = await userModel.findOne(getQueryParams, userDetails);
       console.log(user);
       if (user.isRegistered) {
         return this.sendBadRequest(res, 'User Already Registered');
       }
-      const userDupCheck = await userModel.find({username: req.body.username});
+      const userDupCheck = await userModel.find({ username: req.body.username });
       if (userDupCheck.length) {
         return this.sendBadRequest(res, 'Username already taken, Please choose another username');
       }
@@ -95,11 +96,11 @@ class Authentication extends RequestBase {
         'password': 1,
         'companyCode2': 1,
         'status': 1,
-        'empCode': 1,
         'email': 1,
         'firstName': 1,
         'lastName': 1,
-        'username': 1
+        'username': 1,
+        'empNumber': 1
       }
       const user = await userModel.findOne(getQueryParams, userDetails);
       if (!user) {
@@ -139,6 +140,25 @@ class Authentication extends RequestBase {
 
     } catch (e) {
       console.log('login', e);
+      this.sendServerError(res, e.message);
+    }
+  }
+
+  private logout = async (req: express.Request, res: express.Response) => {
+    try {
+      if (!req.body.id) {
+        return this.sendBadRequest(res, 'Invalid user details');
+      }
+      await userTokenModel.findOneAndUpdate({ _id: req.body.id }, { status: 'Inactive' });
+      const resObj: IResponse = {
+        res: res,
+        status: 200,
+        message: 'Loggedout Successfully',
+        data: {}
+      }
+      this.send(resObj);
+    } catch (e) {
+      console.log('logout', e);
       this.sendServerError(res, e.message);
     }
   }

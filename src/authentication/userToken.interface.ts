@@ -1,7 +1,7 @@
-interface UserToken {
+interface IUserToken {
   userId: String;
   token: String;
   status: String;
 };
 
-export default UserToken;
+export default IUserToken;

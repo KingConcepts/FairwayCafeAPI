@@ -3,12 +3,17 @@ import App from './app';
 import PostsController from './posts/posts.controller';
 import UserController from './user/user.controller';
 import Authentication from './authentication/authentication.controller';
- 
+import CategoryController from './menu/category/category.controller';
+import SubCategoryController from './menu/subcategory/subcategory.controller';
+import ItemController from './menu/item/item.controller';
 const app = new App(
   [
     new PostsController(),
     new UserController(),
     new Authentication(),
+    new CategoryController(),
+    new SubCategoryController(),
+    new ItemController(),
   ],
   process.env.PORT,
 );
