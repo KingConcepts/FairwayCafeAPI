@@ -91,7 +91,7 @@ class Authentication extends RequestBase {
 
   private login = async (req: express.Request, res: express.Response) => {
     try {
-      const getQueryParams = { email: req.body.email, isRegistered: true };
+      const getQueryParams = { username: req.body.username, isRegistered: true };
       const userDetails = {
         'password': 1,
         'companyCode2': 1,
