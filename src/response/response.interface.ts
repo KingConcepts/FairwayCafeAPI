@@ -1,7 +1,7 @@
 class ResponseBase {
     status: number;
     message: string;
-    data: object;
+    payload: object;
   }
    
   export default ResponseBase;

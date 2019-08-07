@@ -6,7 +6,7 @@ class ResponseBase {
     response: IResponseBase = {
         status: 200,
         message: '',
-        data: {}
+        payload: {}
     }
     constructor() {
 
@@ -18,13 +18,14 @@ class ResponseBase {
     public send = (resObj) => {
         this.response.status = resObj.status;
         this.response.message = resObj.message;
-        this.response.data = resObj.data;
+        this.response.payload = resObj.data;
         // res.set({
         //     'Cache-Control': 'private, no-cache, no-store, must-revalidate',
         //     'Expires': '-1',
         //     'Pragma': 'no-cache'
         // });
-        resObj.res.status(resObj.status).json(this.response);
+        // resObj.res.status(resObj.status).json(this.response);
+        resObj.res.json(this.response);
     }
     /**
      * Sends Express Response with 500 Server error and err detail as data.
@@ -46,7 +47,7 @@ class ResponseBase {
             res,
             status: constants.error.ResourceNotFound.status,
             message: constants.error.ResourceNotFound.message,
-            data: {}
+            payload: {}
         }
         this.send(resObj);
     }
@@ -58,7 +59,7 @@ class ResponseBase {
             res,
             status: constants.error.NotAuthorized.status,
             message: constants.error.NotAuthorized.message,
-            data: {}
+            payload: {}
         }
         this.send(resObj);
     }
@@ -70,7 +71,7 @@ class ResponseBase {
             res,
             status: constants.error.BadRequest.status,
             message: err,
-            data: {}
+            payload: {}
         }
         this.send(resObj);
     }
@@ -82,7 +83,7 @@ class ResponseBase {
             res,
             status: constants.error.InvalidToken.status,
             message: constants.error.InvalidToken.message,
-            data: {}
+            payload: {}
         }
         this.send(resObj);
     }
