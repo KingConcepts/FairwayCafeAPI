@@ -3,16 +3,16 @@ import * as express from 'express';
 import Post from './post.interface';
 import postModel from './posts.model';
 import authMiddleware from '../middleware/auth.middleware';
- 
+
 class PostsController {
   public path = '/posts';
   public router = express.Router();
   private post = postModel;
- 
+
   constructor() {
     this.initializeRoutes();
   }
- 
+
   private initializeRoutes() {
     this.router.get(this.path, authMiddleware, this.getAllPosts);
     // this.router.get(`${this.path}/:id`, this.getPostById);
@@ -20,14 +20,14 @@ class PostsController {
     // this.router.delete(`${this.path}/:id`, this.deletePost);
     this.router.post(this.path, this.createPost);
   }
- 
+
   private getAllPosts = (request: express.Request, response: express.Response) => {
     this.post.find()
       .then((posts) => {
         response.send(posts);
       });
   }
- 
+
   private getPostById = (request: express.Request, response: express.Response) => {
     const id = request.params.id;
     this.post.findById(id)
@@ -35,7 +35,7 @@ class PostsController {
         response.send(post);
       });
   }
- 
+
   private modifyPost = (request: express.Request, response: express.Response) => {
     const id = request.params.id;
     const postData: Post = request.body;
@@ -44,7 +44,7 @@ class PostsController {
         response.send(post);
       });
   }
- 
+
   private createPost = (request: express.Request, response: express.Response) => {
     const postData: Post = request.body;
     const createdPost = new this.post(postData);
@@ -53,7 +53,7 @@ class PostsController {
         response.send(savedPost);
       });
   }
- 
+
   private deletePost = (request: express.Request, response: express.Response) => {
     const id = request.params.id;
     this.post.findByIdAndDelete(id)
@@ -66,5 +66,5 @@ class PostsController {
       });
   }
 }
- 
+
 export default PostsController;

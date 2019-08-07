@@ -9,7 +9,7 @@ import {
   IResponse
 } from '../../interfaces/response.interface'
 class CategoryController extends RequestBase{
-  public path = '/menu';
+  public path = '/api/menu';
   public router = express.Router();
 
   constructor() {

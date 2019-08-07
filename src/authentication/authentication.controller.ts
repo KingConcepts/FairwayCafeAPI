@@ -24,9 +24,9 @@ class Authentication extends RequestBase {
   }
 
   private initializeRoutes() {
-    this.router.post(`/signup`, this.registration);
-    this.router.post(`/login`, this.login);
-    this.router.post(`/logout`, authMiddleware, this.logout);
+    this.router.post(`/api/signup`, this.registration);
+    this.router.post(`/api/login`, this.login);
+    this.router.post(`/api/logout`, authMiddleware, this.logout);
   }
 
   private registration = async (req: RequestWithUser, res: express.Response) => {
