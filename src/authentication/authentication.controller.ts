@@ -26,12 +26,13 @@ class Authentication extends RequestBase {
   private initializeRoutes() {
     this.router.post(`/api/signup`, this.registration);
     this.router.post(`/api/login`, this.login);
-    this.router.post(`/api/logout`, authMiddleware, this.logout);
+    this.router.post(`/api/logout`, this.logout);
   }
 
   private registration = async (req: RequestWithUser, res: express.Response) => {
     try {
-      const getQueryParams = { email: req.body.email, empNumber: req.body.empCode };
+      const getQueryParams = { email: req.body.email, empNumber: req.body.empNumber };
+      
       const userDetails = {
         'companyCode2': 1,
         'status': 1,
@@ -42,6 +43,9 @@ class Authentication extends RequestBase {
         'empNumber': 1
       }
       const user = await userModel.findOne(getQueryParams, userDetails);
+      if(!user) {
+        return this.sendBadRequest(res, 'Email or EmpNumber is not correct');
+      }
       console.log(user);
       if (user.isRegistered) {
         return this.sendBadRequest(res, 'User Already Registered');
