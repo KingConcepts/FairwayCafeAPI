@@ -4,6 +4,7 @@ class IOrder {
   subTotal: Number;
   tax: Number;
   items : IItems;
+  userId: String
 };
 
 class IItems {

@@ -26,6 +26,7 @@ class OrderController extends RequestBase {
   private createOrder = async (req: express.Request, res: express.Response) => {
     try {
       const orderData: IOrder = req.body;
+      orderData.userId = req.user.id;
       const createdData = new orderModel(orderData);
       const result = await createdData.save();
 
@@ -50,35 +51,33 @@ class OrderController extends RequestBase {
     try {
 
       const order = await orderModel.aggregate([
-        { "$match": { "_id": mongoose.Types.ObjectId(req.params.id) } },
+        { $match: { _id: mongoose.Types.ObjectId(req.params.id), userId: mongoose.Types.ObjectId(req.user.id) } },
         {
-          $unwind: "$items"
-        },
-        // {
-        //   "$lookup":
-        //   {
-        //     "from": 'items',
-        //     "localField": 'items.itemId',
-        //     "foreignField": '_id',
-        //     "as": 'items'
-        //   }
-        // },
-        {
-          $group:
+          $lookup:
           {
-            _id: "$_id",
-            total: { $first: "$total" },
-            subTotal: { $first: "$subTotal" },
-            tax: { $first: "$tax" },
-            orderId: { $first: "$orderId" },
-            items: { $addToSet: "$items" },
+            from: "items",
+            localField: "items.itemId",
+            foreignField: "_id",
+            as: "itemList"
           }
-        },
+        }
 
       ]);
       if (!order.length) {
         return this.sendBadRequest(res, 'Incorrect Order ID');
       }
+      order[0].items.map(item => {
+        order[0].itemList.map(element => {
+          if (JSON.stringify(item.itemId) == JSON.stringify(element._id)) {
+            item.name = element.name;
+            item.description = element.description;
+            item.imageURL = element.imageURL ? `${process.env.IMAGE_LOCATION}${element.imageURL}` : process.env.DEFAULT_IMAGE;
+          }
+        });
+      });
+
+      delete order[0].itemList;
+
       const resObj: IResponse = {
         res: res,
         status: 200,
@@ -87,7 +86,7 @@ class OrderController extends RequestBase {
       }
       this.send(resObj);
     } catch (e) {
-      console.log('createOrder', e);
+      console.log('getOrder', e);
       this.sendServerError(res, e.message);
     }
 
@@ -95,32 +94,41 @@ class OrderController extends RequestBase {
 
   private getAllOrders = async (req: express.Request, res: express.Response) => {
     try {
-      const order = await orderModel.aggregate([
-        {
-          $unwind: "$items"
-        },
-        {
-          $group:
-          {
-            _id: "$_id",
-            total: { $first: "$total" },
-            subTotal: { $first: "$subTotal" },
-            tax: { $first: "$tax" },
-            orderId: { $first: "$orderId" },
-            items: { $addToSet: "$items" },
-          }
-        },
+      const orders = await orderModel.aggregate([
 
-      ])
+        { $match: { userId: mongoose.Types.ObjectId('5d35bff95bba7b60e66ad939') } },
+        {
+          $lookup:
+          {
+            from: "items",
+            localField: "items.itemId",
+            foreignField: "_id",
+            as: "itemList"
+          }
+        }
+      ]);
+
+      orders.map((order) => {
+        order.items.map(item => {
+          order.itemList.map(element => {
+            if (JSON.stringify(item.itemId) == JSON.stringify(element._id)) {
+              item.name = element.name;
+              item.description = element.description;
+              item.imageURL = element.imageURL ? `${process.env.IMAGE_LOCATION}${element.imageURL}` : process.env.DEFAULT_IMAGE;
+            }
+          });
+        });
+        delete order.itemList;
+      });
       const resObj: IResponse = {
         res: res,
         status: 200,
-        message: 'Order loaded Successfully',
-        data: order
+        message: 'Orders loaded Successfully',
+        data: orders
       }
       this.send(resObj);
     } catch (e) {
-      console.log('createOrder', e);
+      console.log('getAllOrders', e);
       this.sendServerError(res, e.message);
     }
 

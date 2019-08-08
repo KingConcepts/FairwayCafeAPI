@@ -23,7 +23,7 @@ class Authentication extends RequestBase {
   private initializeRoutes() {
     this.router.post(`/api/signup`, this.registration);
     this.router.post(`/api/login`, this.login);
-    this.router.post(`/api/logout`, this.logout);
+    this.router.post(`/api/logout/:id`, this.logout);
   }
 
   private registration = async (req: RequestWithUser, res: express.Response) => {
@@ -153,10 +153,10 @@ class Authentication extends RequestBase {
 
   private logout = async (req: express.Request, res: express.Response) => {
     try {
-      if (!req.body.id) {
+      if (!req.params.id) {
         return this.sendBadRequest(res, 'Invalid user details');
       }
-      await userTokenModel.findOneAndUpdate({ _id: req.body.id }, { status: 'Inactive' });
+      await userTokenModel.findOneAndUpdate({ _id: req.params.id }, { status: 'Inactive' });
       const resObj: IResponse = {
         res: res,
         status: 200,

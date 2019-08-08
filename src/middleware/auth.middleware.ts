@@ -10,12 +10,11 @@ import authentication from '../utils/authentication';
 import ResponseBase from '../response/response.controller';
 import IDataStoredInToken from '../interfaces/dataStoredInToken';
 
-async function authMiddleware(req: Request, res: Response, next: NextFunction) {
+async function authMiddleware(req: RequestWithUser, res: Response, next: NextFunction) {
   const responseBase = new ResponseBase();
   try {
     const token = req.headers['authorization'];
     const tokenExpirationTime: number = Number(process.env.TOKEN_EXP_TIME);
-    // const tokenExpirationTime: number = 3000;
     if (token) {
       const verificationResponse: any = await authentication.verifyToken(token);
       console.log('verificationResponse', verificationResponse);
@@ -40,7 +39,7 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
             console.log('user', user);
             if ((user.companyCode2 === 'CGC' || user.companyCode2 === 'CGI' || user.companyCode2 === 'CGS')
               && (user.status === '3')) {
-              // req.user = user;
+              req.user = user;
               next();
             } else {
               await userTokenModel.findOneAndUpdate({ token }, { status: 'Inactive' });
