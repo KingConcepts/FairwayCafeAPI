@@ -6,6 +6,8 @@ import Authentication from './authentication/authentication.controller';
 import CategoryController from './menu/category/category.controller';
 import SubCategoryController from './menu/subcategory/subcategory.controller';
 import ItemController from './menu/item/item.controller';
+import OrderController from './order/order.controller';
+
 const app = new App(
   [
     new PostsController(),
@@ -14,6 +16,7 @@ const app = new App(
     new CategoryController(),
     new SubCategoryController(),
     new ItemController(),
+    new OrderController(),
   ],
   process.env.PORT,
 );

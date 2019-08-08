@@ -1,5 +1,6 @@
 import * as express from 'express';
 import * as mongoose from 'mongoose';
+
 import RequestBase from '../../response/response.controller';
 import itemModel from './item.model';
 import subcategoryModel from './../subcategory/subcategory.model';
@@ -21,9 +22,6 @@ class ItemController extends RequestBase {
 
   private initializeRoutes() {
     this.router.get(`${this.path}/item/:id`, authMiddleware, this.getItem);
-    // this.router.get(`${this.path}/:id`, this.getPostById);
-    // this.router.put(`${this.path}/:id`, this.modifyPost);
-    // this.router.delete(`${this.path}/:id`, this.deletePost);
   }
 
   private getItem = async (req: express.Request, res: express.Response) => {
@@ -33,11 +31,17 @@ class ItemController extends RequestBase {
       const item = await itemModel.findOne({_id: req.params.id});
       const subcategory = await subcategoryModel.findOne({_id: mongoose.Types.ObjectId(item.subcategoryId)});
       const category = await categoryModel.findOne({_id: subcategory.categoryId});
+      
+      item.imageURL = item.imageURL ? `${process.env.IMAGE_LOCATION}${item.imageURL}` : process.env.DEFAULT_IMAGE;
+      subcategory.imageURL = subcategory.imageURL ? `${process.env.IMAGE_LOCATION}${subcategory.imageURL}` : process.env.DEFAULT_IMAGE;
+      category.imageURL = category.imageURL ? `${process.env.IMAGE_LOCATION}${category.imageURL}` : process.env.DEFAULT_IMAGE;
+      
       resData = {
         ...item._doc,
         subcategory,
         category
       };
+      
       const resObj: IResponse = {
         res: res,
         status: 200,

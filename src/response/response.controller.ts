@@ -47,7 +47,7 @@ class ResponseBase {
             res,
             status: constants.error.ResourceNotFound.status,
             message: constants.error.ResourceNotFound.message,
-            payload: {}
+            data: {}
         }
         this.send(resObj);
     }
@@ -59,7 +59,7 @@ class ResponseBase {
             res,
             status: constants.error.NotAuthorized.status,
             message: constants.error.NotAuthorized.message,
-            payload: {}
+            data: {}
         }
         this.send(resObj);
     }
@@ -71,7 +71,7 @@ class ResponseBase {
             res,
             status: constants.error.BadRequest.status,
             message: err,
-            payload: {}
+            data: {}
         }
         this.send(resObj);
     }
@@ -83,7 +83,7 @@ class ResponseBase {
             res,
             status: constants.error.InvalidToken.status,
             message: constants.error.InvalidToken.message,
-            payload: {}
+            data: {}
         }
         this.send(resObj);
     }

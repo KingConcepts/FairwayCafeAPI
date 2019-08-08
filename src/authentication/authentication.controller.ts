@@ -1,8 +1,6 @@
 import * as express from 'express';
-// import NotAuthorizedException from '../exceptions/NotAuthorizedException';
+
 import RequestWithUser from '../interfaces/requestWithUser.interface';
-import authMiddleware from '../middleware/auth.middleware';
-// import postModel from '../post/post.model';
 import userTokenModel from './userToken.model';
 import userModel from '../user/user.model';
 import bycryptOprations from '../utils/bcryptOperations';
@@ -16,7 +14,6 @@ import {
 class Authentication extends RequestBase {
   public path = '/users';
   public router = express.Router();
-  // private post = postModel;
 
   constructor() {
     super();
@@ -81,7 +78,10 @@ class Authentication extends RequestBase {
           res: res,
           status: 201,
           message: 'User Registered Successfully',
-          data: resData
+          data: {
+            user: resData,
+            cart: {}
+          }
         }
         this.send(resObj);
       } else {
@@ -132,7 +132,10 @@ class Authentication extends RequestBase {
             res: res,
             status: 200,
             message: 'Loggedin Successfully',
-            data: resData
+            data: {
+              user: resData,
+              cart: {}
+            }
           }
           this.send(resObj);
         } else {

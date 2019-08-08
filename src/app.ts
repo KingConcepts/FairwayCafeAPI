@@ -1,6 +1,7 @@
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import * as mongoose from 'mongoose';
+
 import errorMiddleware from './middleware/error.middleware';
 
 class App {
@@ -19,6 +20,7 @@ class App {
 
   private initializeMiddlewares() {
     this.app.use(bodyParser.json());
+    this.app.use('/', express.static('public'));
   }
 
   private initializeControllers(controllers) {

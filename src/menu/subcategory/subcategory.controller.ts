@@ -1,12 +1,10 @@
 import * as express from 'express';
 import * as mongoose from 'mongoose';
+
 import RequestBase from '../../response/response.controller';
-// import Controller from '../interfaces/controller.interface';
 import subcategoryModel from './subcategory.model';
 import authMiddleware from '../../middleware/auth.middleware';
-import {
-  IResponse
-} from '../../interfaces/response.interface';
+import { IResponse } from '../../interfaces/response.interface';
 
 class SubcategoryController extends RequestBase {
   public path = '/api/menu';
@@ -27,8 +25,8 @@ class SubcategoryController extends RequestBase {
   private getAllSubcategoryWithItems = async (req: express.Request, res: express.Response) => {
     try {
       const result = await subcategoryModel.aggregate([
-        {"$match": {"categoryId": mongoose.Types.ObjectId(req.params.categoryId) }},
-        
+        { "$match": { "categoryId": mongoose.Types.ObjectId(req.params.categoryId) } },
+
         /** Category array in listing subcategory with item */
         // {
         //   "$lookup":
@@ -49,6 +47,12 @@ class SubcategoryController extends RequestBase {
           }
         },
       ]);
+      result.map((subcategory) => {
+        subcategory.imageURL = subcategory.imageURL ? `${process.env.IMAGE_LOCATION}${subcategory.imageURL}` : process.env.DEFAULT_IMAGE;
+        return subcategory.items.map((item) => {
+          item.imageURL = item.imageURL ? `${process.env.IMAGE_LOCATION}${item.imageURL}` : process.env.DEFAULT_IMAGE;
+        })
+      });
       const resObj: IResponse = {
         res: res,
         status: 200,
@@ -60,7 +64,6 @@ class SubcategoryController extends RequestBase {
       console.log('getAllCategory', e);
       this.sendServerError(res, e.message);
     }
-
   }
 }
 export default SubcategoryController;
