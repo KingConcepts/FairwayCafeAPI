@@ -20,7 +20,12 @@ class CategoryController extends RequestBase {
 
   private getAllCategory = async (req: express.Request, res: express.Response) => {
     try {
-      const categories = await categoryModel.find();
+      let queryParams: any = {};
+      
+      if(!req.isAdmin) {
+        queryParams.status = true;
+      }
+      const categories = await categoryModel.find(queryParams);
       
       categories.map((category) => {
         return category.imageURL = category.imageURL ? `${process.env.IMAGE_LOCATION}${category.imageURL}` : process.env.DEFAULT_IMAGE;

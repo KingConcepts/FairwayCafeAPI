@@ -7,6 +7,7 @@ import CategoryController from './menu/category/category.controller';
 import SubCategoryController from './menu/subcategory/subcategory.controller';
 import ItemController from './menu/item/item.controller';
 import OrderController from './order/order.controller';
+import CartController from './cart/cart.controller';
 
 const app = new App(
   [
@@ -17,6 +18,7 @@ const app = new App(
     new SubCategoryController(),
     new ItemController(),
     new OrderController(),
+    new CartController(),
   ],
   process.env.PORT,
 );

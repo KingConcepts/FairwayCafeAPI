@@ -6,6 +6,11 @@ const categorySchema = new mongoose.Schema({
   status: { type: Boolean, required: false },
   description: { type: String, required: false },
   imageURL: { type: String, default: '' },
+},
+{
+    strict: false,
+    versionKey: false,
+    timestamps: true,
 });
  
 const categoryModel = mongoose.model<ICategory & mongoose.Document>('Category', categorySchema);

@@ -7,6 +7,11 @@ const subcategorySchema = new mongoose.Schema({
   description: { type: String, required: false },
   imageURL: { type: String, default: '' },
   categoryId : { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
+},
+{
+    strict: false,
+    versionKey: false,
+    timestamps: true,
 });
 
 const subcategoryModel = mongoose.model<ISubcategory & mongoose.Document>('Subcategory', subcategorySchema);

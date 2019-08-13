@@ -24,8 +24,17 @@ class SubcategoryController extends RequestBase {
 
   private getAllSubcategoryWithItems = async (req: express.Request, res: express.Response) => {
     try {
+      let queryParams: any = {};
+      let itemQuery : any = {};
+      if (!req.isAdmin) {
+        queryParams.status = true;
+        queryParams.categoryId = mongoose.Types.ObjectId(req.params.categoryId);
+        itemQuery.status = true;
+      } else {
+        queryParams.categoryId = mongoose.Types.ObjectId(req.params.categoryId);
+      }
       const result = await subcategoryModel.aggregate([
-        { "$match": { "categoryId": mongoose.Types.ObjectId(req.params.categoryId) } },
+        { "$match": queryParams },
 
         /** Category array in listing subcategory with item */
         // {
@@ -41,9 +50,11 @@ class SubcategoryController extends RequestBase {
           "$lookup":
           {
             "from": 'items',
-            "localField": '_id',
-            "foreignField": 'subcategoryId',
-            "as": 'items'
+            // "localField": '_id',
+            // "foreignField": 'subcategoryId',
+            "let": { "id": "$subcategoryId" },
+            "as": 'items',
+            "pipeline": [{ "$match": itemQuery }]
           }
         },
       ]);

@@ -6,6 +6,8 @@ import userModel from '../user/user.model';
 import bycryptOprations from '../utils/bcryptOperations';
 import authentication from '../utils/authentication';
 import RequestBase from '../response/response.controller';
+import CartController from '../cart/cart.controller';
+
 import {
   IUserData,
   IResponse
@@ -28,7 +30,7 @@ class Authentication extends RequestBase {
 
   private registration = async (req: RequestWithUser, res: express.Response) => {
     try {
-      const getQueryParams = { email: req.body.email, empNumber: req.body.empNumber };
+      const getQueryParams = { email: req.body.email.toLowerCase(), empNumber: req.body.empNumber };
       
       const userDetails = {
         'companyCode2': 1,
@@ -56,7 +58,7 @@ class Authentication extends RequestBase {
         const updateParams = {
           isRegistered: true,
           password: await bycryptOprations.genratePasswordHash(req.body.password),
-          username: req.body.username
+          username: req.body.username.toLowerCase()
         }
         await userModel.updateOne({ _id: user._id }, updateParams);
         const token = await authentication.genratetoken(user._id);
@@ -92,10 +94,11 @@ class Authentication extends RequestBase {
       this.sendServerError(res, e.message);
     }
   }
-
+  
   private login = async (req: express.Request, res: express.Response) => {
     try {
-      const getQueryParams = { username: req.body.username, isRegistered: true };
+      console.log('req.body.username.toLowerCase()', req.body.username.toLowerCase());
+      const getQueryParams = { username: req.body.username.toLowerCase(), isRegistered: true };
       const userDetails = {
         'password': 1,
         'companyCode2': 1,
@@ -128,13 +131,18 @@ class Authentication extends RequestBase {
             token,
             company: user._doc.email
           };
+
+          /** Getting user cart details */
+          const cartController = new CartController();
+          const cartDetails = await cartController.getUserCart(user._id);
+
           const resObj: IResponse = {
             res: res,
             status: 200,
             message: 'Loggedin Successfully',
             data: {
               user: resData,
-              cart: {}
+              cart: cartDetails || {}
             }
           }
           this.send(resObj);

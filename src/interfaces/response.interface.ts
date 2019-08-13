@@ -46,3 +46,11 @@ export interface IResponse {
     message: String;
     data: any;
 };
+
+export interface ICartDetails {
+    totalQuantity: Number;
+    subTotal: Number;
+}
+export interface ICartReturnData {
+	returnData: ICartDetails;
+}

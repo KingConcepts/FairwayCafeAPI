@@ -8,8 +8,12 @@ var itemSchema = new mongoose.Schema({
     ref: 'Item',
     type: mongoose.Schema.Types.ObjectId,
   },
-  price: { type: Number, required: true },
-  quantity: { type: Number, required: true }
+  subPrice: { type: Number, required: true },
+  selectedQuantity: { type: Number, required: true },
+  categoryId: {
+    ref: 'Category',
+    type: mongoose.Schema.Types.ObjectId,
+  }
 });
 
 const orderSchema = new mongoose.Schema({
@@ -21,7 +25,15 @@ const orderSchema = new mongoose.Schema({
   userId: {
     ref: 'User',
     type: mongoose.Schema.Types.ObjectId,
-  }
+  },
+  totalQuantity: { type: Number, required: true },
+  totalTaxAmount: { type: Number, required: true },
+  status: { type: Number, default: true },
+},
+{
+    strict: false,
+    versionKey: false,
+    timestamps: true,
 });
 
 autoIncrement.initialize(mongoose);

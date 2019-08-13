@@ -27,21 +27,28 @@ class ItemController extends RequestBase {
   private getItem = async (req: express.Request, res: express.Response) => {
     try {
       let resData: IItemData;
+      let queryParams: any = {};
 
-      const item = await itemModel.findOne({_id: req.params.id});
-      const subcategory = await subcategoryModel.findOne({_id: mongoose.Types.ObjectId(item.subcategoryId)});
-      const category = await categoryModel.findOne({_id: subcategory.categoryId});
-      
+      if (!req.isAdmin) {
+        queryParams.status = true;
+        queryParams._id = req.params.id;
+      } else {
+        queryParams._id = req.params.id
+      }
+      const item = await itemModel.findOne(queryParams);
+      const subcategory = await subcategoryModel.findOne({ _id: mongoose.Types.ObjectId(item.subcategoryId) });
+      const category = await categoryModel.findOne({ _id: subcategory.categoryId });
+
       item.imageURL = item.imageURL ? `${process.env.IMAGE_LOCATION}${item.imageURL}` : process.env.DEFAULT_IMAGE;
       subcategory.imageURL = subcategory.imageURL ? `${process.env.IMAGE_LOCATION}${subcategory.imageURL}` : process.env.DEFAULT_IMAGE;
       category.imageURL = category.imageURL ? `${process.env.IMAGE_LOCATION}${category.imageURL}` : process.env.DEFAULT_IMAGE;
-      
+
       resData = {
         ...item._doc,
         subcategory,
         category
       };
-      
+
       const resObj: IResponse = {
         res: res,
         status: 200,

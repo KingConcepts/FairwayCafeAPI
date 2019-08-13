@@ -17,7 +17,7 @@ async function authMiddleware(req: RequestWithUser, res: Response, next: NextFun
     const tokenExpirationTime: number = Number(process.env.TOKEN_EXP_TIME);
     if (token) {
       const verificationResponse: any = await authentication.verifyToken(token);
-      console.log('verificationResponse', verificationResponse);
+      // console.log('verificationResponse', verificationResponse);
 
       /** Token should expire after 48 hours of inactivity
        *  calculating 1 month hours from now
@@ -25,7 +25,6 @@ async function authMiddleware(req: RequestWithUser, res: Response, next: NextFun
       const currentTime: number = new Date().getTime();
       const timeToExpire = (currentTime - tokenExpirationTime);
       const userToken = await userTokenModel.findOne({ token, status: 'Active' });
-      console.log('userToken', userToken);
       if (userToken && verificationResponse) {
         const updatedAt: number = new Date(userToken.updatedAt).getTime();
         if (updatedAt < timeToExpire) {
@@ -36,10 +35,10 @@ async function authMiddleware(req: RequestWithUser, res: Response, next: NextFun
           await userTokenModel.findOneAndUpdate({ token }, { status: 'Active' });
           const user = await userModel.findById(verificationResponse.data.id, { 'companyCode2': 1, 'status': 1 });
           if (user) {
-            console.log('user', user);
             if ((user.companyCode2 === 'CGC' || user.companyCode2 === 'CGI' || user.companyCode2 === 'CGS')
               && (user.status === '3')) {
               req.user = user;
+              // req.isAdmin = true;
               next();
             } else {
               await userTokenModel.findOneAndUpdate({ token }, { status: 'Inactive' });

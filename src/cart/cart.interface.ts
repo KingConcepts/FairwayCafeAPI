@@ -1,5 +1,4 @@
-class IOrder {
-  orderId: Number;
+class ICart {
   totalQuantity: Number;
   totalTaxAmount: Number;
   total: Number;
@@ -7,7 +6,6 @@ class IOrder {
   tax: Number;
   items: IItems;
   userId: String;
-  status: Boolean;
 };
 
 class IItems {
@@ -17,4 +15,4 @@ class IItems {
   subPrice: Number;
 };
 
-export default IOrder
+export default ICart;

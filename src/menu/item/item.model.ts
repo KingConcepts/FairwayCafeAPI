@@ -10,6 +10,11 @@ const itemSchema = new mongoose.Schema({
   subcategoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Subategory', required: true },
   price: { type: Number, required: true },
   quantity: { type: Number, required: true }
+},
+{
+    strict: false,
+    versionKey: false,
+    timestamps: true,
 });
 
 const itemModel = mongoose.model<IItem & mongoose.Document>('Item', itemSchema);
