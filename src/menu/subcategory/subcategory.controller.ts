@@ -25,7 +25,7 @@ class SubcategoryController extends RequestBase {
   private getAllSubcategoryWithItems = async (req: express.Request, res: express.Response) => {
     try {
       let queryParams: any = {};
-      let itemQuery : any = {};
+      let itemQuery: any = {};
       if (!req.isAdmin) {
         queryParams.status = true;
         queryParams.categoryId = mongoose.Types.ObjectId(req.params.categoryId);
@@ -34,7 +34,7 @@ class SubcategoryController extends RequestBase {
         queryParams.categoryId = mongoose.Types.ObjectId(req.params.categoryId);
       }
       const result = await subcategoryModel.aggregate([
-        { "$match": queryParams },
+        { $match: queryParams },
 
         /** Category array in listing subcategory with item */
         // {
@@ -47,17 +47,31 @@ class SubcategoryController extends RequestBase {
         //   }
         // },
         {
-          "$lookup":
+          $lookup:
           {
-            "from": 'items',
-            // "localField": '_id',
-            // "foreignField": 'subcategoryId',
-            "let": { "id": "$subcategoryId" },
-            "as": 'items',
-            "pipeline": [{ "$match": itemQuery }]
+            from: 'items',
+            localField: '_id',
+            foreignField: 'subcategoryId',
+            as: 'items',
           }
         },
+        {
+          $project: {
+            name: 1,
+            description: 1,
+            status: 1,
+            categoryId: 1,
+            items: {
+              $filter: {
+                input: "$items",
+                as: "item",
+                cond: { $eq: ["$$item.status", true] }
+              }
+            }
+          }
+        }
       ]);
+      
       result.map((subcategory) => {
         subcategory.imageURL = subcategory.imageURL ? `${process.env.IMAGE_LOCATION}${subcategory.imageURL}` : process.env.DEFAULT_IMAGE;
         return subcategory.items.map((item) => {
