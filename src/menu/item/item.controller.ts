@@ -36,8 +36,11 @@ class ItemController extends RequestBase {
         queryParams._id = req.params.id
       }
       const item = await itemModel.findOne(queryParams);
-      const subcategory = await subcategoryModel.findOne({ _id: mongoose.Types.ObjectId(item.subcategoryId) });
-      const category = await categoryModel.findOne({ _id: subcategory.categoryId });
+      if(!item) {
+        return this.sendBadRequest(res, 'Item Is Not Availabale.');
+      }
+      const subcategory = item ? await subcategoryModel.findOne({ _id: mongoose.Types.ObjectId(item.subcategoryId) }) : '';
+      const category = subcategory ? await categoryModel.findOne({ _id: subcategory.categoryId }) : '';
 
       item.imageURL = item.imageURL ? `${process.env.IMAGE_LOCATION}${item.imageURL}` : process.env.DEFAULT_IMAGE;
       subcategory.imageURL = subcategory.imageURL ? `${process.env.IMAGE_LOCATION}${subcategory.imageURL}` : process.env.DEFAULT_IMAGE;

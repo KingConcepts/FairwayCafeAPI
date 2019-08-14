@@ -18,6 +18,23 @@ export class Authentication {
     });
   };
 
+  public genrateAdminToken(userId) {
+    return new Promise((resolve, reject) => {
+      try {
+        const token = jwt.sign({
+          data: {
+            id: userId,
+            isAdmin: true
+          }
+        }, process.env.JWT_SECRET);
+        resolve(token);
+      } catch (e) {
+        console.log('genratetoken', e);
+        reject(e);
+      }
+    });
+  };
+
   public verifyToken(token) {
     return new Promise((resolve, reject) => {
       try {

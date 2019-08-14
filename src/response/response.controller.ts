@@ -8,6 +8,7 @@ class ResponseBase {
         message: '',
         payload: {}
     }
+
     constructor() {
 
     }
@@ -83,6 +84,18 @@ class ResponseBase {
             res,
             status: constants.error.InvalidToken.status,
             message: constants.error.InvalidToken.message,
+            data: {}
+        }
+        this.send(resObj);
+    }
+    /**
+     * Sends express response with 403(status) Access Denied
+     */
+    public accessDenied = (res) => {
+        const resObj = {
+            res,
+            status: constants.error.AccessDenied.status,
+            message: constants.error.AccessDenied.message,
             data: {}
         }
         this.send(resObj);

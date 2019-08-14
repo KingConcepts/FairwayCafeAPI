@@ -5,6 +5,7 @@ import WrongAuthenticationTokenException from '../exception/WrongAuthenticationT
 import DataStoredInToken from '../interfaces/dataStoredInToken';
 import RequestWithUser from '../interfaces/requestWithUser.interface';
 import userModel from '../user/user.model';
+import adminModel from '../user/user.model';
 import userTokenModel from '../authentication/userToken.model';
 import authentication from '../utils/authentication';
 import ResponseBase from '../response/response.controller';
@@ -32,22 +33,31 @@ async function authMiddleware(req: RequestWithUser, res: Response, next: NextFun
           responseBase.invalidToken(res);
 
         } else {
-          await userTokenModel.findOneAndUpdate({ token }, { status: 'Active' });
-          const user = await userModel.findById(verificationResponse.data.id, { 'companyCode2': 1, 'status': 1 });
-          if (user) {
-            if ((user.companyCode2 === 'CGC' || user.companyCode2 === 'CGI' || user.companyCode2 === 'CGS')
-              && (user.status === '3')) {
-              req.user = user;
-              // req.isAdmin = true;
-              next();
+          if (verificationResponse.data.isAdmin) {
+            await userTokenModel.findOneAndUpdate({ token }, { status: 'Active' });
+            const user = await adminModel.findById(verificationResponse.data.id);
+            req.user = user;
+            req.isAdmin = true;
+            next();
+            if (user) { }
+          } else {
+            await userTokenModel.findOneAndUpdate({ token }, { status: 'Active' });
+            const user = await userModel.findById(verificationResponse.data.id, { 'companyCode2': 1, 'status': 1 });
+            if (user) {
+              if ((user.companyCode2 === 'CGC' || user.companyCode2 === 'CGI' || user.companyCode2 === 'CGS')
+                && (user.status === '3')) {
+                req.user = user;
+                next();
+              } else {
+                await userTokenModel.findOneAndUpdate({ token }, { status: 'Inactive' });
+                responseBase.invalidToken(res);
+              }
             } else {
               await userTokenModel.findOneAndUpdate({ token }, { status: 'Inactive' });
               responseBase.invalidToken(res);
             }
-          } else {
-            await userTokenModel.findOneAndUpdate({ token }, { status: 'Inactive' });
-            responseBase.invalidToken(res);
           }
+
         }
       } else {
         responseBase.invalidToken(res);

@@ -3,9 +3,13 @@ import ICategory from './category.interface';
  
 const categorySchema = new mongoose.Schema({
   name: { type: String, required: false },
-  status: { type: Boolean, required: false },
+  status: { type: Boolean, default: true },
   description: { type: String, required: false },
   imageURL: { type: String, default: '' },
+  restaurantId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Restaurant'
+  }
 },
 {
     strict: false,

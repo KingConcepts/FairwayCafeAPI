@@ -25,53 +25,54 @@ class SubcategoryController extends RequestBase {
   private getAllSubcategoryWithItems = async (req: express.Request, res: express.Response) => {
     try {
       let queryParams: any = {};
-      let itemQuery: any = {};
+      let result: any;
+      queryParams.categoryId = mongoose.Types.ObjectId(req.params.categoryId);
+      console.log('req.isAdmin', req.isAdmin);
       if (!req.isAdmin) {
         queryParams.status = true;
-        queryParams.categoryId = mongoose.Types.ObjectId(req.params.categoryId);
-        itemQuery.status = true;
-      } else {
-        queryParams.categoryId = mongoose.Types.ObjectId(req.params.categoryId);
-      }
-      const result = await subcategoryModel.aggregate([
-        { $match: queryParams },
-
-        /** Category array in listing subcategory with item */
-        // {
-        //   "$lookup":
-        //   {
-        //     "from": 'categories',
-        //     "localField": 'categoryId',
-        //     "foreignField": '_id',
-        //     "as": 'category'
-        //   }
-        // },
-        {
-          $lookup:
+        result = await subcategoryModel.aggregate([
+          { $match: queryParams },
           {
-            from: 'items',
-            localField: '_id',
-            foreignField: 'subcategoryId',
-            as: 'items',
-          }
-        },
-        {
-          $project: {
-            name: 1,
-            description: 1,
-            status: 1,
-            categoryId: 1,
-            items: {
-              $filter: {
-                input: "$items",
-                as: "item",
-                cond: { $eq: ["$$item.status", true] }
+            $lookup:
+            {
+              from: 'items',
+              localField: '_id',
+              foreignField: 'subcategoryId',
+              as: 'items',
+            }
+          },
+          {
+            $project: {
+              name: 1,
+              description: 1,
+              status: 1,
+              categoryId: 1,
+              items: {
+                $filter: {
+                  input: "$items",
+                  as: "item",
+                  cond: { $eq: ["$$item.status", queryParams.status] }
+                }
               }
             }
           }
-        }
-      ]);
-      
+        ]);
+      } else {
+        queryParams.categoryId = mongoose.Types.ObjectId(req.params.categoryId);
+        result = await subcategoryModel.aggregate([
+          { $match: queryParams },
+          {
+            $lookup:
+            {
+              from: 'items',
+              localField: '_id',
+              foreignField: 'subcategoryId',
+              as: 'items',
+            }
+          }
+        ]);
+      }
+
       result.map((subcategory) => {
         subcategory.imageURL = subcategory.imageURL ? `${process.env.IMAGE_LOCATION}${subcategory.imageURL}` : process.env.DEFAULT_IMAGE;
         return subcategory.items.map((item) => {

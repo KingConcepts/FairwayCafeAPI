@@ -3,6 +3,7 @@ class ICategory {
   status: Boolean;
   description: String;
   imageURL: String;
+  restaurantId: String;
 }
 
 export default ICategory

@@ -24,7 +24,11 @@ class Contants {
         BadRequest: <ICommonError>{
             message: '',
             status: 400
-        }
+        },
+        AccessDenied: <ICommonError>{
+            message: 'Access Denied',
+            status: 403
+        },
     }
 
 }

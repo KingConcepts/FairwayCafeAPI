@@ -9,4 +9,5 @@ export interface IError {
     NotAuthorized : ICommonError;
     InvalidToken : ICommonError;
     BadRequest: ICommonError;
+    AccessDenied: ICommonError;
 }
