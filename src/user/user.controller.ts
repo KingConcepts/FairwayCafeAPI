@@ -5,6 +5,7 @@ import userTokenModel from '../authentication/userToken.model';
 import bycryptOprations from '../utils/bcryptOperations';
 import { IResponse } from 'interfaces/response.interface';
 import RequestBase from '../response/response.controller';
+import authentication from '../utils/authentication';
 
 class UserController extends RequestBase {
   public path = '/api/user';
@@ -24,6 +25,11 @@ class UserController extends RequestBase {
       const user = await userModel.findOne({ _id: req.body.id }, { 'password': 1 });
       const isPasswordMatched = await bycryptOprations.comparePassword(req.body.oldPassword, user.password);
       if (isPasswordMatched) {
+        const isPasswordValidate = authentication.validatePassword(req.body.password);
+
+        if (!isPasswordValidate) {
+          return this.sendBadRequest(res, 'Password should a 8-character length with at least 1 alphabet and 1 number');
+        }
         const updateParams = {
           password: await bycryptOprations.genratePasswordHash(req.body.password)
         }

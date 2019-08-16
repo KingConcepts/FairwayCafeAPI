@@ -46,6 +46,11 @@ export class Authentication {
       }
     });
   }
+
+  public validatePassword = function (password) {
+    const re = /^(?=.*[A-Za-z_@.\/#&+-])(?=.*\d)[A-Za-z_@.\/#&+\-\d]{8,}$/;
+    return re.test(password);
+};
 }
 
 export default new Authentication;

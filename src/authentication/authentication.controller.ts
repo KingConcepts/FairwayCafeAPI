@@ -30,8 +30,9 @@ class Authentication extends RequestBase {
 
   private registration = async (req: RequestWithUser, res: express.Response) => {
     try {
-      const getQueryParams = { email: req.body.email.toLowerCase(), empNumber: req.body.empNumber };
-      
+      //@TODO .toLowerCase() to email here and also while saving
+      const getQueryParams = { email: req.body.email, empNumber: req.body.empNumber };
+
       const userDetails = {
         'companyCode2': 1,
         'status': 1,
@@ -42,17 +43,25 @@ class Authentication extends RequestBase {
         'empNumber': 1
       }
       const user = await userModel.findOne(getQueryParams, userDetails);
-      if(!user) {
+      if (!user) {
         return this.sendBadRequest(res, 'Email or EmpNumber is not correct');
       }
-      console.log(user);
+
       if (user.isRegistered) {
         return this.sendBadRequest(res, 'User Already Registered');
       }
+
       const userDupCheck = await userModel.find({ username: req.body.username });
       if (userDupCheck.length) {
         return this.sendBadRequest(res, 'Username already taken, Please choose another username');
       }
+
+      const isPasswordValidate = authentication.validatePassword(req.body.password);
+
+      if (!isPasswordValidate) {
+        return this.sendBadRequest(res, 'Password should a 8-character length with at least 1 alphabet and 1 number');
+      }
+
       if ((user.companyCode2 === 'CGC' || user.companyCode2 === 'CGI' || user.companyCode2 === 'CGS')
         && (user.status === '3')) {
         const updateParams = {
@@ -94,7 +103,7 @@ class Authentication extends RequestBase {
       this.sendServerError(res, e.message);
     }
   }
-  
+
   private login = async (req: express.Request, res: express.Response) => {
     try {
       console.log('req.body.username.toLowerCase()', req.body.username.toLowerCase());

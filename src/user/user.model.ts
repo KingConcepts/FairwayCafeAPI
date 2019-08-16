@@ -42,8 +42,8 @@ const userSchema = new mongoose.Schema(
         location: { type: String, required: false },
         orgChartElig: { type: String, required: false },
         isRegistered: { type: Boolean, default: false },
-        password: { type: String, requied: false },
-        username:{ type: String, required: false}
+        password: { type: String, required: false },
+        username: { type: String, required: false }
     },
     {
         strict: false,
