@@ -34,7 +34,7 @@ class OrderController extends RequestBase {
             return this.sendBadRequest(res, `${itemData.name} is sold out!`);
           }
           if (item.selectedQuantity > itemData.quantity) {
-            return this.sendBadRequest(res, `Only ${itemData.quantity} ${itemData.name} are left!`);
+            return this.sendBadRequest(res, `Only few items are left!`);
           }
           totalQuantity = totalQuantity + item.selectedQuantity;
           subTotal = subTotal + (itemData.price * item.selectedQuantity);
@@ -81,7 +81,6 @@ class OrderController extends RequestBase {
         total: (subTotal + totalTaxAmount).toFixed(2),
         status: true
       };
-      console.log('saveQueryParams', saveQueryParams);
 
       if (!req.body.isForcePlace && (saveQueryParams.total != req.body.total)) {
         return this.sendBadRequest(res, 'Total Price is different from Cart, Still want to continue?');
@@ -170,14 +169,15 @@ class OrderController extends RequestBase {
 
   private getAllOrders = async (req: express.Request, res: express.Response) => {
     try {
+      const page = req.query.page ? req.query.page : 1;
       const ordersCount = await orderModel.count();
-      const limit = Number(req.query.limit) || 10;
-      const skip = Number((req.query.page - 1) * limit);
+      const limit = Number(req.query.limit) || Number(process.env.PAGE_LIMIT);
+      const skip = Number((page - 1) * limit);
       const orders = await orderModel.aggregate([
         { $match: { userId: mongoose.Types.ObjectId(req.user.id) } },
         { $skip: skip },
         { $limit: limit },
-        { $sort : { updatedAt : -1}},
+        { $sort: { updatedAt: -1 } },
         {
           $lookup:
           {
@@ -216,9 +216,13 @@ class OrderController extends RequestBase {
         delete order.itemList;
         delete order.categoryList;
       });
+      let pageCount = ordersCount / limit;
+      const totalPage = pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount
       const orderRes = {
         orders,
-        ordersCount
+        ordersCount,
+        page: Number(page),
+        totalPage
       }
       const resObj: IResponse = {
         res: res,

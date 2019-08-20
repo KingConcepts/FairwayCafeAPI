@@ -193,7 +193,7 @@ class CartController extends RequestBase {
   private updateCart = async (req: express.Request, res: express.Response) => {
     try {
       let itemList: any = [];
-      const cart = await cartModel.findOne({ userId: req.body.userId });
+      const cart = await cartModel.findOne({ userId: req.user.id });
       const item = await itemModel.findOne({ _id: req.body.itemId });
 
       /** @TODO Add setting colletion fetch tax data from collection */
@@ -208,6 +208,7 @@ class CartController extends RequestBase {
       /** If Items already available in cart */
       if (cart && cart.items.length) {
         itemList = cart.items;
+        /** Removes items from array */
         itemList.map((itemDetails, index) => {
           if (JSON.stringify(itemDetails.itemId) == JSON.stringify(req.body.itemId)) {
             itemList.splice(index, 1);
