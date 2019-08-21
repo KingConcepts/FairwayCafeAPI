@@ -62,6 +62,7 @@ class CartController extends RequestBase {
     return new Promise(async (resolve, reject) => {
       try {
         const cart = await cartModel.findOne({ userId });
+        console.log('cart', cart);
         if (cart && cart.items) {
           const data: any = await this.getTotalDetails(cart.items);
           const totalQuantity = data.totalQuantity;
@@ -91,6 +92,7 @@ class CartController extends RequestBase {
     });
 
   }
+  
   /** Get details of user cart */
   getUserCart = (userId) => {
     return new Promise(async (resolve, reject) => {
@@ -137,7 +139,11 @@ class CartController extends RequestBase {
           delete cartDetails[0].itemList;
           delete cartDetails[0].categoryList;
         }
-        resolve(cartDetails[0]);
+        if (cartDetails[0].items.length) {
+          resolve(cartDetails[0]);
+        } else {
+          resolve({});
+        }
       } catch (e) {
         console.log('getUserCart', e);
         reject(e);
@@ -148,7 +154,7 @@ class CartController extends RequestBase {
 
   getCart = async (req: express.Request, res: express.Response) => {
     try {
-      const result = this.getCartData(req.user.id);
+      const result = await this.getCartData(req.user.id);
       const resObj: IResponse = {
         res: res,
         status: 200,
@@ -191,7 +197,7 @@ class CartController extends RequestBase {
           selectedQuantity: req.body.selectedQuantity,
           categoryId: req.body.categoryId,
           subPrice: (req.body.selectedQuantity * item.price).toFixed(2),
-          price: item.price.toFixed(2)
+          price: Number(item.price).toFixed(2)
         });
         const ItemListCopy = _.cloneDeep(itemList);
         const data: any = await this.getTotalDetails(ItemListCopy);
@@ -203,7 +209,7 @@ class CartController extends RequestBase {
           selectedQuantity: req.body.selectedQuantity,
           categoryId: req.body.categoryId,
           subPrice: (req.body.selectedQuantity * item.price).toFixed(2),
-          price: item.price.toFixed(2)
+          price: Number(item.price).toFixed(2)
         });
         subTotal = (item.price * req.body.selectedQuantity);
         totalQuantity = req.body.selectedQuantity
@@ -266,7 +272,7 @@ class CartController extends RequestBase {
             selectedQuantity: req.body.selectedQuantity,
             categoryId: req.body.categoryId,
             subPrice: (req.body.selectedQuantity * item.price).toFixed(2),
-            price: item.price.toFixed(2)
+            price: Number(item.price).toFixed(2)
           });
         }
         const ItemListCopy = _.cloneDeep(itemList);

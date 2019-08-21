@@ -1,10 +1,10 @@
 class IOrder {
   orderId: Number;
   totalQuantity: Number;
-  totalTaxAmount: Number;
-  total: Number;
-  subTotal: Number;
-  tax: Number;
+  totalTaxAmount: String;
+  total: String;
+  subTotal: String;
+  tax: String;
   items: IItems;
   userId: String;
   status: Boolean;
@@ -14,8 +14,8 @@ class IItems {
   itemId: String;
   selectedQuantity: Number;
   categoryId: String;
-  subPrice: Number;
-  price: Number;
+  subPrice: String;
+  price: String;
 };
 
 export default IOrder

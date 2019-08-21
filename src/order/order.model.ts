@@ -8,8 +8,8 @@ var itemSchema = new mongoose.Schema({
     ref: 'Item',
     type: mongoose.Schema.Types.ObjectId,
   },
-  price: { type: Number, required: true },
-  subPrice: { type: Number, required: true },
+  price: { type: String, required: true },
+  subPrice: { type: String, required: true },
   selectedQuantity: { type: Number, required: true },
   categoryId: {
     ref: 'Category',
@@ -19,16 +19,16 @@ var itemSchema = new mongoose.Schema({
 
 const orderSchema = new mongoose.Schema({
   orderId: { type: Number, required: true },
-  total: { type: Number, required: true },
-  subTotal: { type: Number, required: true },
-  tax: { type: Number, required: true },
+  total: { type: String, required: true },
+  subTotal: { type: String, required: true },
+  tax: { type: String, required: true },
   items: [itemSchema],
   userId: {
     ref: 'User',
     type: mongoose.Schema.Types.ObjectId,
   },
   totalQuantity: { type: Number, required: true },
-  totalTaxAmount: { type: Number, required: true },
+  totalTaxAmount: { type: String, required: true },
   status: { type: Boolean, default: true },
 },
 {

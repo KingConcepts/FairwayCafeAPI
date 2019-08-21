@@ -8,7 +8,7 @@ const itemSchema = new mongoose.Schema({
   description: { type: String, required: false },
   imageURL: { type: String, default: '' },
   subcategoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Subategory', required: true },
-  price: { type: Number, required: true },
+  price: { type: String, required: true },
   quantity: { type: Number, required: true }
 },
 {

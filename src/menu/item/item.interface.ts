@@ -4,7 +4,7 @@ class IItem {
   description: String;
   imageURL: String;
   subcategoryId: String;
-  price: Number;
+  price: String;
   quantity: Number;
 }
 

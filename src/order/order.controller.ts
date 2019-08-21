@@ -81,7 +81,7 @@ class OrderController extends RequestBase {
         total: (subTotal + totalTaxAmount).toFixed(2),
         status: true
       };
-      if (saveQueryParams.total != req.body.total) {
+      if (saveQueryParams.total != Number(req.body.total)) {
         return this.sendBadRequest(res, 'Price of some item has changed.');
       };
 
