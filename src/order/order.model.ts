@@ -8,6 +8,7 @@ var itemSchema = new mongoose.Schema({
     ref: 'Item',
     type: mongoose.Schema.Types.ObjectId,
   },
+  price: { type: Number, required: true },
   subPrice: { type: Number, required: true },
   selectedQuantity: { type: Number, required: true },
   categoryId: {
@@ -28,7 +29,7 @@ const orderSchema = new mongoose.Schema({
   },
   totalQuantity: { type: Number, required: true },
   totalTaxAmount: { type: Number, required: true },
-  status: { type: Number, default: true },
+  status: { type: Boolean, default: true },
 },
 {
     strict: false,

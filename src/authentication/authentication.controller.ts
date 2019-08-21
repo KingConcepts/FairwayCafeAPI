@@ -106,7 +106,6 @@ class Authentication extends RequestBase {
 
   private login = async (req: express.Request, res: express.Response) => {
     try {
-      console.log('req.body.username.toLowerCase()', req.body.username.toLowerCase());
       const getQueryParams = { username: req.body.username.toLowerCase(), isRegistered: true };
       const userDetails = {
         'password': 1,
@@ -119,6 +118,7 @@ class Authentication extends RequestBase {
         'empNumber': 1
       }
       const user = await userModel.findOne(getQueryParams, userDetails);
+      console.log('user', user);
       if (!user) {
         this.sendNotAuthorized(res);
       }
@@ -143,15 +143,14 @@ class Authentication extends RequestBase {
 
           /** Getting user cart details */
           const cartController = new CartController();
-          const cartDetails = await cartController.getUserCart(user._id);
-
+          const cartDetails = await cartController.getCartData(user._id);
           const resObj: IResponse = {
             res: res,
             status: 200,
             message: 'Loggedin Successfully',
             data: {
               user: resData,
-              cart: cartDetails || {}
+              cart: cartDetails
             }
           }
           this.send(resObj);

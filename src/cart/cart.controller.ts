@@ -6,13 +6,13 @@ import RequestBase from '../response/response.controller';
 import itemModel from '../menu/item/item.model';
 import cartModel from './cart.model';
 import authMiddleware from '../middleware/auth.middleware';
-import { IResponse, ICartReturnData } from '../interfaces/response.interface';
-import categoryModel from '../menu/category/category.model';
+import { IResponse } from '../interfaces/response.interface';
 
 class CartController extends RequestBase {
   public path = '/api/cart';
   public router = express.Router();
   public returnData;
+
   constructor() {
     super();
     this.initializeRoutes();
@@ -22,6 +22,7 @@ class CartController extends RequestBase {
     this.router.post(`${this.path}`, authMiddleware, this.addToCart);
     this.router.put(`${this.path}`, authMiddleware, this.updateCart);
     this.router.get(`${this.path}`, authMiddleware, this.getCart);
+    this.router.delete(`${this.path}`, authMiddleware, this.emptyCart);
   }
 
   /** Caculates total quantity and sub total of all the items in cart */
@@ -31,13 +32,22 @@ class CartController extends RequestBase {
         if (index < items.length) {
           const item = items[index];
           const itemData = await itemModel.findOne({ _id: item.itemId });
+          if (!itemData.quantity) {
+            item.selectedQuantity = 0
+          }
+          if (item.selectedQuantity > itemData.quantity) {
+            item.selectedQuantity = itemData.quantity
+            // return this.sendBadRequest(res, `Only few items are left!`);
+          }
           totalQuantity = totalQuantity + item.selectedQuantity;
           subTotal = subTotal + (itemData.price * item.selectedQuantity);
+          item.price = itemData.price;
+          items[index] = item;
           // items.splice(0, 1);
           index = index + 1;
           resolve(this.getTotalDetails(items, totalQuantity, subTotal, index));
         } else {
-          resolve({ totalQuantity, subTotal });
+          resolve({ totalQuantity, subTotal, items });
         }
         resolve(true);
       } catch (e) {
@@ -48,6 +58,39 @@ class CartController extends RequestBase {
 
   }
 
+  getCartData = (userId) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const cart = await cartModel.findOne({ userId });
+        if (cart && cart.items) {
+          const data: any = await this.getTotalDetails(cart.items);
+          const totalQuantity = data.totalQuantity;
+          const subTotal = data.subTotal;
+          const tax = Number(process.env.TAX);
+          const totalTaxAmount = (subTotal * tax) / 100;
+          const updateQueryParams = {
+            userId: userId,
+            totalQuantity,
+            tax: Number(process.env.TAX).toFixed(2),
+            items: data.items,
+            subTotal: subTotal.toFixed(2),
+            totalTaxAmount: totalTaxAmount.toFixed(2),
+            total: (subTotal + totalTaxAmount).toFixed(2)
+          };
+          await cartModel.findOneAndUpdate({ userId }, updateQueryParams, { upsert: true, new: true });
+          const result = await this.getUserCart(userId);
+          resolve(result);
+        } else {
+          resolve({});
+        }
+
+      } catch (e) {
+        reject(reject);
+        console.log('getCartData', e);
+      }
+    });
+
+  }
   /** Get details of user cart */
   getUserCart = (userId) => {
     return new Promise(async (resolve, reject) => {
@@ -103,9 +146,9 @@ class CartController extends RequestBase {
 
   }
 
-  private getCart = async (req: express.Request, res: express.Response) => {
+  getCart = async (req: express.Request, res: express.Response) => {
     try {
-      const result = await this.getUserCart(req.user.id);
+      const result = this.getCartData(req.user.id);
       const resObj: IResponse = {
         res: res,
         status: 200,
@@ -123,7 +166,7 @@ class CartController extends RequestBase {
   private addToCart = async (req: express.Request, res: express.Response) => {
     try {
       let itemList: any = [];
-      const cart = await cartModel.findOne({ userId: req.body.userId });
+      const cart = await cartModel.findOne({ userId: req.user.id });
       const item = await itemModel.findOne({ _id: req.body.itemId });
 
       /** @TODO Add setting colletion fetch tax data from collection */
@@ -148,6 +191,7 @@ class CartController extends RequestBase {
           selectedQuantity: req.body.selectedQuantity,
           categoryId: req.body.categoryId,
           subPrice: (req.body.selectedQuantity * item.price).toFixed(2),
+          price: item.price.toFixed(2)
         });
         const ItemListCopy = _.cloneDeep(itemList);
         const data: any = await this.getTotalDetails(ItemListCopy);
@@ -159,23 +203,24 @@ class CartController extends RequestBase {
           selectedQuantity: req.body.selectedQuantity,
           categoryId: req.body.categoryId,
           subPrice: (req.body.selectedQuantity * item.price).toFixed(2),
+          price: item.price.toFixed(2)
         });
         subTotal = (item.price * req.body.selectedQuantity);
         totalQuantity = req.body.selectedQuantity
       }
       const totalTaxAmount = (subTotal * tax) / 100;
       const updateQueryParams = {
-        userId: req.body.userId,
+        userId: req.user.id,
         totalQuantity,
-        tax: tax,
+        tax: tax.toFixed(2),
         items: itemList,
         subTotal: subTotal.toFixed(2),
         totalTaxAmount: totalTaxAmount.toFixed(2),
         total: (subTotal + totalTaxAmount).toFixed(2)
       };
-      await cartModel.findOneAndUpdate({ userId: req.body.userId }, updateQueryParams, { upsert: true, new: true });
+      await cartModel.findOneAndUpdate({ userId: req.user.id }, updateQueryParams, { upsert: true, new: true });
 
-      const cartDetails = await this.getUserCart(req.body.userId);
+      const cartDetails = await this.getUserCart(req.user.id);
       const resObj: IResponse = {
         res: res,
         status: 200,
@@ -214,12 +259,14 @@ class CartController extends RequestBase {
             itemList.splice(index, 1);
           }
         });
+        /** If quantity is > 0 againg adding item with updated quantity */
         if (req.body.selectedQuantity > 0) {
           itemList.push({
             itemId: req.body.itemId,
             selectedQuantity: req.body.selectedQuantity,
             categoryId: req.body.categoryId,
             subPrice: (req.body.selectedQuantity * item.price).toFixed(2),
+            price: item.price.toFixed(2)
           });
         }
         const ItemListCopy = _.cloneDeep(itemList);
@@ -231,17 +278,17 @@ class CartController extends RequestBase {
       }
       const totalTaxAmount = (subTotal * tax) / 100;
       const updateQueryParams = {
-        userId: req.body.userId,
+        userId: req.user.id,
         totalQuantity,
-        tax: tax,
+        tax: tax.toFixed(2),
         items: itemList,
         subTotal: subTotal.toFixed(2),
         totalTaxAmount: totalTaxAmount.toFixed(2),
         total: (subTotal + totalTaxAmount).toFixed(2)
       };
-      await cartModel.findOneAndUpdate({ userId: req.body.userId }, updateQueryParams, { upsert: true, new: true });
+      await cartModel.findOneAndUpdate({ userId: req.user.id }, updateQueryParams, { upsert: true, new: true });
 
-      const cartDetails = await this.getUserCart(req.body.userId);
+      const cartDetails = await this.getUserCart(req.user.id);
       const resObj: IResponse = {
         res: res,
         status: 200,
@@ -251,6 +298,23 @@ class CartController extends RequestBase {
       this.send(resObj);
     } catch (e) {
       console.log('updateCart', e);
+      this.sendServerError(res, e.message);
+    }
+
+  }
+
+  private emptyCart = async (req: express.Request, res: express.Response) => {
+    try {
+      await cartModel.findOneAndRemove({ userId: req.user.id });
+      const resObj: IResponse = {
+        res: res,
+        status: 200,
+        message: 'Cart Removed Successfully.',
+        data: {}
+      }
+      this.send(resObj);
+    } catch (e) {
+      console.log('emptyCart', e);
       this.sendServerError(res, e.message);
     }
 

@@ -72,18 +72,17 @@ class OrderController extends RequestBase {
       const totalTaxAmount = (subTotal * tax) / 100;
 
       const saveQueryParams = {
-        userId: req.body.userId,
+        userId: req.user.id,
         totalQuantity,
-        tax: tax,
+        tax: tax.toFixed(2),
         items: req.body.items,
         subTotal: subTotal.toFixed(2),
         totalTaxAmount: totalTaxAmount.toFixed(2),
         total: (subTotal + totalTaxAmount).toFixed(2),
         status: true
       };
-
-      if (!req.body.isForcePlace && (saveQueryParams.total != req.body.total)) {
-        return this.sendBadRequest(res, 'Total Price is different from Cart, Still want to continue?');
+      if (saveQueryParams.total != req.body.total) {
+        return this.sendBadRequest(res, 'Price of some item has changed.');
       };
 
       const createdData = new orderModel(saveQueryParams);

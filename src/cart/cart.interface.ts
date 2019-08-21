@@ -13,6 +13,7 @@ class IItems {
   selectedQuantity: Number;
   categoryId: String;
   subPrice: Number;
+  price: Number;
 };
 
 export default ICart;

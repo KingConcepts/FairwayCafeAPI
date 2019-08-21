@@ -9,6 +9,7 @@ var itemSchema = new mongoose.Schema({
   },
   selectedQuantity: { type: Number, required: true },
   subPrice: { type: Number, required: true },
+  price: { type: Number, required: true },
   categoryId: {
     ref: 'Category',
     type: mongoose.Schema.Types.ObjectId,
