@@ -7,6 +7,7 @@ import itemModel from '../menu/item/item.model';
 import cartModel from './cart.model';
 import authMiddleware from '../middleware/auth.middleware';
 import { IResponse } from '../interfaces/response.interface';
+import TaxController from '../settings/tax/tax.controller';
 
 class CartController extends RequestBase {
   public path = '/api/cart';
@@ -61,8 +62,9 @@ class CartController extends RequestBase {
   getCartData = (userId) => {
     return new Promise(async (resolve, reject) => {
       try {
+        const taxController = new TaxController();
+        const tax = await taxController.getTaxValue();
         const cart = await cartModel.findOne({ userId });
-        console.log('cart', cart);
         if (cart && cart.items) {
           const data: any = await this.getTotalDetails(cart.items);
           const totalQuantity = data.totalQuantity;
@@ -72,7 +74,7 @@ class CartController extends RequestBase {
           const updateQueryParams = {
             userId: userId,
             totalQuantity,
-            tax: Number(process.env.TAX).toFixed(2),
+            tax: Number(tax).toFixed(2),
             items: data.items,
             subTotal: subTotal.toFixed(2),
             totalTaxAmount: totalTaxAmount.toFixed(2),
@@ -92,7 +94,7 @@ class CartController extends RequestBase {
     });
 
   }
-  
+
   /** Get details of user cart */
   getUserCart = (userId) => {
     return new Promise(async (resolve, reject) => {
@@ -175,8 +177,8 @@ class CartController extends RequestBase {
       const cart = await cartModel.findOne({ userId: req.user.id });
       const item = await itemModel.findOne({ _id: req.body.itemId });
 
-      /** @TODO Add setting colletion fetch tax data from collection */
-      const tax = 15;
+      const taxController = new TaxController();
+      const tax = await taxController.getTaxValue();
 
       if (req.body.selectedQuantity > item.quantity) {
         return this.sendBadRequest(res, 'Quantity Is Not Availaible For Selected Item');
@@ -192,13 +194,15 @@ class CartController extends RequestBase {
             itemList.splice(index, 1);
           }
         });
-        itemList.push({
-          itemId: req.body.itemId,
-          selectedQuantity: req.body.selectedQuantity,
-          categoryId: req.body.categoryId,
-          subPrice: (req.body.selectedQuantity * item.price).toFixed(2),
-          price: Number(item.price).toFixed(2)
-        });
+        if (req.body.selectedQuantity > 0) {
+          itemList.push({
+            itemId: req.body.itemId,
+            selectedQuantity: req.body.selectedQuantity,
+            categoryId: req.body.categoryId,
+            subPrice: (req.body.selectedQuantity * item.price).toFixed(2),
+            price: Number(item.price).toFixed(2)
+          });
+        }
         const ItemListCopy = _.cloneDeep(itemList);
         const data: any = await this.getTotalDetails(ItemListCopy);
         totalQuantity = data.totalQuantity;
@@ -214,11 +218,11 @@ class CartController extends RequestBase {
         subTotal = (item.price * req.body.selectedQuantity);
         totalQuantity = req.body.selectedQuantity
       }
-      const totalTaxAmount = (subTotal * tax) / 100;
+      const totalTaxAmount = (subTotal * Number(tax)) / 100;
       const updateQueryParams = {
         userId: req.user.id,
         totalQuantity,
-        tax: tax.toFixed(2),
+        tax: Number(tax).toFixed(2),
         items: itemList,
         subTotal: subTotal.toFixed(2),
         totalTaxAmount: totalTaxAmount.toFixed(2),
@@ -247,8 +251,8 @@ class CartController extends RequestBase {
       const cart = await cartModel.findOne({ userId: req.user.id });
       const item = await itemModel.findOne({ _id: req.body.itemId });
 
-      /** @TODO Add setting colletion fetch tax data from collection */
-      const tax = 15;
+      const taxController = new TaxController();
+      const tax = await taxController.getTaxValue();
 
       if (req.body.selectedQuantity > item.quantity) {
         return this.sendBadRequest(res, 'Quantity Is Not Availaible For Selected Item');
@@ -282,11 +286,11 @@ class CartController extends RequestBase {
       } else {
         return this.sendBadRequest(res, 'Selected Item is Not Available In Cart');
       }
-      const totalTaxAmount = (subTotal * tax) / 100;
+      const totalTaxAmount = (subTotal * Number(tax)) / 100;
       const updateQueryParams = {
         userId: req.user.id,
         totalQuantity,
-        tax: tax.toFixed(2),
+        tax: Number(tax).toFixed(2),
         items: itemList,
         subTotal: subTotal.toFixed(2),
         totalTaxAmount: totalTaxAmount.toFixed(2),

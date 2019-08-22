@@ -5,9 +5,15 @@ export class Notification {
     public sendEmail() {
         return new Promise((resolve, reject) => {
             const smtpConfig = {
-                service: 'Gmail',
+                // service: 'Gmail',
+                host: 'smtp.gmail.com',
+                port: 587,
+                tls: {
+                    ciphers: 'SSLv3'
+                },
+                secure: false,
                 auth: {
-                    user: 'rspl.test10@gmail.com',
+                    user: 'rspl.fe@gmail.com',
                     pass: 'rspl123#'
                 }
             };
@@ -15,16 +21,18 @@ export class Notification {
 
             const mailOptions = {
                 to: 'anjali.pandya@rishabhsoft.com',
-                from: '',
+                from: 'rspl.fe@gmail.com',
                 subject: 'Test Mail',
-                html: 'Hello!',
+                text: 'Hello!',
             };
 
             transporter.sendMail(mailOptions, function (error, info) {
                 if (error) {
-                    reject(error);
+                    console.log('error',error);
+                    // reject(error);
                 } else {
-                    resolve(info);
+                    console.log('info',info);
+                    // resolve(info);
                 }
             });
         });

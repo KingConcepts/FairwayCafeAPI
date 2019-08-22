@@ -7,6 +7,7 @@ import orderModel from './order.model';
 import authMiddleware from '../middleware/auth.middleware';
 import { IResponse } from '../interfaces/response.interface';
 import IOrder from './order.interface';
+import TaxController from '../settings/tax/tax.controller';
 
 class OrderController extends RequestBase {
   public path = '/api/order';
@@ -29,22 +30,29 @@ class OrderController extends RequestBase {
       try {
         if (index < items.length) {
           const item = items[index];
-          const itemData = await itemModel.findOne({ _id: item.itemId });
-          if (!itemData.quantity) {
-            return this.sendBadRequest(res, `${itemData.name} is sold out!`);
+          if (item.selectedQuantity > 0) {
+            const itemData = await itemModel.findOne({ _id: item.itemId });
+            if (!itemData.quantity) {
+              return this.sendBadRequest(res, `${itemData.name} is sold out!`);
+            }
+            if (item.selectedQuantity > itemData.quantity) {
+              return this.sendBadRequest(res, `Only few items are left!`);
+            }
+            totalQuantity = totalQuantity + item.selectedQuantity;
+            subTotal = subTotal + (itemData.price * item.selectedQuantity);
+            console.log('totalQuantity', totalQuantity);
+            console.log('subTotal', subTotal);
+            item.price = itemData.price;
+            items[index] = item;
+            // items.splice(0, 1);
+            index = index + 1;
+            resolve(this.getOrderDetails(res, items, totalQuantity, subTotal, index));
+          } else {
+            items.splice(0, 1);
+            resolve(this.getOrderDetails(res, items, totalQuantity, subTotal, index));
           }
-          if (item.selectedQuantity > itemData.quantity) {
-            return this.sendBadRequest(res, `Only few items are left!`);
-          }
-          totalQuantity = totalQuantity + item.selectedQuantity;
-          subTotal = subTotal + (itemData.price * item.selectedQuantity);
-          console.log('totalQuantity', totalQuantity);
-          console.log('subTotal', subTotal);
-          // items.splice(0, 1);
-          index = index + 1;
-          resolve(this.getOrderDetails(res, items, totalQuantity, subTotal, index));
         } else {
-          resolve({ totalQuantity, subTotal });
+          resolve({ totalQuantity, subTotal, items });
         }
         resolve(true);
       } catch (e) {
@@ -59,22 +67,24 @@ class OrderController extends RequestBase {
       const orderData: IOrder = req.body;
       orderData.userId = req.user.id;
 
-      /** @TODO Add setting colletion fetch tax data from collection */
-      const tax = 15;
+      const taxController = new TaxController();
+      const tax = await taxController.getTaxValue();
 
       let subTotal: any = 0;
       let totalQuantity: any = 0;
 
       const data: any = await this.getOrderDetails(res, req.body.items);
-
+      if (!data.items.length) {
+        return this.sendBadRequest(res, 'Please Select The Item Quantity.');
+      }
       totalQuantity = data.totalQuantity;
       subTotal = data.subTotal;
-      const totalTaxAmount = (subTotal * tax) / 100;
+      const totalTaxAmount = (subTotal * Number(tax)) / 100;
 
       const saveQueryParams = {
         userId: req.user.id,
         totalQuantity,
-        tax: tax.toFixed(2),
+        tax: Number(tax).toFixed(2),
         items: req.body.items,
         subTotal: subTotal.toFixed(2),
         totalTaxAmount: totalTaxAmount.toFixed(2),

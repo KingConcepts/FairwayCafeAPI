@@ -10,6 +10,7 @@ import OrderController from './order/order.controller';
 import CartController from './cart/cart.controller';
 import AdminController from './admin/admin.controller';
 import RestaurantController from './restaurants/restaurant.controller';
+import TaxController from './settings/tax/tax.controller';
 
 const app = new App(
   [
@@ -23,6 +24,7 @@ const app = new App(
     new CartController(),
     new AdminController(),
     new RestaurantController(),
+    new TaxController(),
   ],
   process.env.PORT,
 );

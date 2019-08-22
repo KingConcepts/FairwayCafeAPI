@@ -118,7 +118,6 @@ class Authentication extends RequestBase {
         'empNumber': 1
       }
       const user = await userModel.findOne(getQueryParams, userDetails);
-      console.log('user', user);
       if (!user) {
         this.sendNotAuthorized(res);
       }

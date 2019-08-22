@@ -19,6 +19,7 @@ class SubcategoryController extends RequestBase {
 
   private initializeRoutes() {
     this.router.get(`${this.path}/:categoryId/subcategories`, authMiddleware, this.getAllSubcategoryWithItems);
+    // this.router.get(`${this.path}/:categoryId/subcategories`, this.getAllSubcategoryWithItems);
     this.router.post(`${this.path}/subcategories`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.createSubcategory);
     this.router.get(`${this.path}/subcategories/:id`, authMiddleware, this.getSubcategory);
     this.router.put(`${this.path}/subcategories/:id`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.updateSubcategory);
