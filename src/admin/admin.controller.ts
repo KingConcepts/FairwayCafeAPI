@@ -48,11 +48,7 @@ class AdminController extends RequestBase {
       }
     } catch (e) {
       console.log('changePassword', e);
-      res.json({
-        status: 500,
-        message: 'Some error occured',
-        data: e.message
-      });
+      this.sendServerError(res, e.message);
     }
   }
   private login = async (req: express.Request, res: express.Response) => {
@@ -111,16 +107,12 @@ class AdminController extends RequestBase {
         res: res,
         status: 200,
         message: 'Verification link sent Successfully',
-        data: {}
+        data: req.body
       }
       this.send(resObj);
     } catch (e) {
       console.log('forgotPassword', e);
-      res.json({
-        status: 500,
-        message: 'Some error occured',
-        data: e.message
-      });
+      this.sendServerError(res, e.message);
     }
   }
 
@@ -143,6 +135,7 @@ class AdminController extends RequestBase {
         const updateParams = {
           password: await bycryptOprations.genratePasswordHash(req.body.password)
         }
+        await adminModel.updateOne({ _id: user._id }, updateParams);
       } else {
         return this.sendBadRequest(res, 'Verification link has been expired');
       }
@@ -153,35 +146,10 @@ class AdminController extends RequestBase {
         data: {}
       }
       this.send(resObj);
-      const isPasswordMatched = await bycryptOprations.comparePassword(req.body.oldPassword, user.password);
-      if (isPasswordMatched) {
-        const isPasswordValidate = authentication.validatePassword(req.body.password);
 
-        if (!isPasswordValidate) {
-          return this.sendBadRequest(res, 'Password should a 8-character length with at least 1 alphabet and 1 number');
-        }
-        const updateParams = {
-          password: await bycryptOprations.genratePasswordHash(req.body.password)
-        }
-        await adminModel.updateOne({ _id: user._id }, updateParams);
-        await userTokenModel.findOneAndUpdate({ _id: req.body.id }, { status: 'Inactive' });
-        const resObj: IResponse = {
-          res: res,
-          status: 201,
-          message: 'Password Changed Successfully',
-          data: {}
-        }
-        this.send(resObj);
-      } else {
-        this.sendBadRequest(res, 'Old Password Is Incorrect');
-      }
     } catch (e) {
       console.log('changePassword', e);
-      res.json({
-        status: 500,
-        message: 'Some error occured',
-        data: e.message
-      });
+      this.sendServerError(res, e.message);
     }
   }
 }

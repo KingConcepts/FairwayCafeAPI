@@ -8,7 +8,6 @@ export class Cron {
                 console.log('You will see this message every second');
             }, null, true, 'America/Los_Angeles');
 
-
         } catch (e) {
             console.log('cron', e);
         }
