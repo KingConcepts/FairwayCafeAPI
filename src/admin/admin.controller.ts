@@ -6,6 +6,7 @@ import bycryptOprations from '../utils/bcryptOperations';
 import { IResponse } from 'interfaces/response.interface';
 import RequestBase from '../response/response.controller';
 import authentication from '../utils/authentication';
+import TaxController from '../settings/tax/tax.controller';
 
 class AdminController extends RequestBase {
   public path = '/api/admin';
@@ -19,6 +20,8 @@ class AdminController extends RequestBase {
   private initializeRoutes() {
     this.router.post(`${this.path}/change_password`, this.changePassword);
     this.router.post(`${this.path}/login`, this.login);
+    this.router.post(`${this.path}/forgot_password`, this.forgotPassword);
+    this.router.post(`${this.path}/verify_forgot_password`, this.verifyForgotPassword);
   }
 
   private changePassword = async (req: express.Request, res: express.Response) => {
@@ -51,11 +54,16 @@ class AdminController extends RequestBase {
       this.sendServerError(res, e.message);
     }
   }
+
   private login = async (req: express.Request, res: express.Response) => {
     try {
-      const getQueryParams = { username: req.body.username.toLowerCase() };
+      const getQueryParams = { email: req.body.email.toLowerCase() };
 
       const user = await adminModel.findOne(getQueryParams);
+      
+      const taxController = new TaxController();
+      const tax = await taxController.getTaxValue();
+
       if (!user) {
         this.sendNotAuthorized(res);
       }
@@ -74,6 +82,9 @@ class AdminController extends RequestBase {
         const resData: any = {
           ...user._doc,
           token,
+          settings: {
+            tax
+          }
         };
 
         const resObj: IResponse = {

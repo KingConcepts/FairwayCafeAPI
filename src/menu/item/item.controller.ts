@@ -23,10 +23,10 @@ class ItemController extends RequestBase {
   }
 
   private initializeRoutes() {
-    this.router.get(`${this.path}/item/:id`, authMiddleware, this.getItem);
+    this.router.get(`${this.path}/items/:id`, authMiddleware, this.getItem);
     this.router.post(`${this.path}/items`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.createItem);
     this.router.get(`${this.path}/:subcategoryId/items`, authMiddleware, this.getAllItems);
-    this.router.put(`${this.path}/item/:id`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.updateItem);
+    this.router.put(`${this.path}/items/:id`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.updateItem);
   }
 
   private getAllItems = async (req: express.Request, res: express.Response) => {
@@ -34,17 +34,24 @@ class ItemController extends RequestBase {
       let queryParams: any = {};
       let items: any = [];
       queryParams.subcategoryId = mongoose.Types.ObjectId(req.params.subcategoryId);
-
+      const page = req.query.page ? req.query.page : 0;
+      const itemsCount = await itemModel.count();
+      const limit = page ? Number(req.query.limit) || Number(process.env.PAGE_LIMIT): 1000;
+      const skip = page ? Number((page - 1) * limit) : 0;
+      const pageCount = page ? itemsCount / limit : 0;
+      const totalPage = page ? (pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount) : 0;
       if (!req.isAdmin) {
         queryParams.status = true;
-        items = await itemModel.find(queryParams);
+        items = await itemModel.find(queryParams).skip(skip).limit(limit);
       } else {
         if (req.query.keyword) {
           items = await itemModel.aggregate([
-            { $match: { name: new RegExp(`${req.query.keyword}`, 'i') } }
+            { $match: { name: new RegExp(`${req.query.keyword}`, 'i') } },
+            { $skip: skip },
+            { $limit: limit },
           ]);
         } else {
-          items = await itemModel.find(queryParams);
+          items = await itemModel.find(queryParams).skip(skip).limit(limit);
         }
       }
 
@@ -58,12 +65,24 @@ class ItemController extends RequestBase {
       });
       // subcategory.imageURL = subcategory.imageURL ? `${process.env.IMAGE_LOCATION}${subcategory.imageURL}` : process.env.DEFAULT_IMAGE;
       // category.imageURL = category.imageURL ? `${process.env.IMAGE_LOCATION}${category.imageURL}` : process.env.DEFAULT_IMAGE;
+      let itemRes;
 
+      if (!req.isAdmin) {
+        itemRes = items;
+      } else {
+        itemRes = {
+          items,
+          totalPage,
+          itemsCount,
+          page: Number(page)
+        }
+      }
       const resObj: IResponse = {
         res: res,
         status: 200,
         message: 'Item Loaded Successfully',
-        data: items
+        data: itemRes
+        
       }
       this.send(resObj);
     } catch (e) {

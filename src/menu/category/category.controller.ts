@@ -32,25 +32,45 @@ class CategoryController extends RequestBase {
       if (!req.isAdmin) {
         queryParams.status = true;
       }
+      const page = req.query.page ? req.query.page : 0;
+      const categoriesCount = await categoryModel.count();
+      const limit = page ? Number(req.query.limit) || Number(process.env.PAGE_LIMIT) : 1000;
+      const skip = page ? Number((page - 1) * limit) : 0;
+      const pageCount = page ? categoriesCount / limit : 0;
+      const totalPage = page ? (pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount) : 0;
 
       if (req.query.keyword) {
         categories = await categoryModel.aggregate([
-          { $match: { name: new RegExp(`${req.query.keyword}`, 'i') } }
+          { $match: { name: new RegExp(`${req.query.keyword}`, 'i') } },
+          { $skip: skip },
+          { $limit: limit }
         ]);
       } else {
-        categories = await categoryModel.find(queryParams);
+        categories = await categoryModel.find(queryParams).skip(skip).limit(limit);
       }
-
 
       categories.map((category) => {
         return category.imageURL = category.imageURL ? `${process.env.IMAGE_LOCATION}${category.imageURL}` : process.env.DEFAULT_IMAGE;
       });
 
+      let categoryRes;
+
+      if (!req.isAdmin) {
+        categoryRes = categories;
+      } else {
+        categoryRes = {
+          categories,
+          totalPage,
+          categoriesCount,
+          page: Number(page)
+        }
+      }
+
       const resObj: IResponse = {
         res: res,
         status: 200,
         message: 'Categories Loaded Successfully',
-        data: categories
+        data: categoryRes
       }
       this.send(resObj);
     } catch (e) {

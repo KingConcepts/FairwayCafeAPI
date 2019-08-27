@@ -31,10 +31,18 @@ class SubcategoryController extends RequestBase {
       let result: any;
 
       queryParams.categoryId = mongoose.Types.ObjectId(req.params.categoryId);
+      const page = req.query.page ? req.query.page : 0;
+      const subcategoriesCount = await subcategoryModel.count();
+      const limit = page ? Number(req.query.limit) || Number(process.env.PAGE_LIMIT) : 1000;
+      const skip = page ? Number((page - 1) * limit) : 0;
+      const pageCount = page ? subcategoriesCount / limit : 0;
+      const totalPage = page ? (pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount) : 0;
       if (!req.isAdmin) {
         queryParams.status = true;
         result = await subcategoryModel.aggregate([
           { $match: queryParams },
+          { $skip: skip },
+          { $limit: limit },
           {
             $lookup:
             {
@@ -67,6 +75,8 @@ class SubcategoryController extends RequestBase {
         }
         result = await subcategoryModel.aggregate([
           { $match: queryParams },
+          { $skip: skip },
+          { $limit: limit },
           {
             $lookup:
             {
@@ -85,11 +95,25 @@ class SubcategoryController extends RequestBase {
           item.imageURL = item.imageURL ? `${process.env.IMAGE_LOCATION}${item.imageURL}` : process.env.DEFAULT_IMAGE;
         })
       });
+
+      let subCategoryRes;
+
+      if (!req.isAdmin) {
+        subCategoryRes = result;
+      } else {
+        subCategoryRes = {
+          subcategries: result,
+          totalPage,
+          subcategoriesCount,
+          page: Number(page)
+        }
+      }
+  
       const resObj: IResponse = {
         res: res,
         status: 200,
         message: 'Subcategory Loaded Successfully',
-        data: result
+        data: subCategoryRes
       }
       this.send(resObj);
     } catch (e) {

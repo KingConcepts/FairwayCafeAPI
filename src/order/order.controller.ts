@@ -189,8 +189,14 @@ class OrderController extends RequestBase {
       const ordersCount = await orderModel.count();
       const limit = Number(req.query.limit) || Number(process.env.PAGE_LIMIT);
       const skip = Number((page - 1) * limit);
+      let queryParams = {};
+
+      if (!req.isAdmin) {
+        queryParams = { userId: mongoose.Types.ObjectId(req.user.id) }
+      }
       const orders = await orderModel.aggregate([
-        { $match: { userId: mongoose.Types.ObjectId(req.user.id) } },
+        // { $match: { userId: mongoose.Types.ObjectId(req.user.id) } },
+        { $match: queryParams },
         { $skip: skip },
         { $limit: limit },
         { $sort: { updatedAt: -1 } },
