@@ -108,7 +108,7 @@ class SubcategoryController extends RequestBase {
           page: Number(page)
         }
       }
-  
+
       const resObj: IResponse = {
         res: res,
         status: 200,
@@ -126,6 +126,11 @@ class SubcategoryController extends RequestBase {
     try {
       if (!req.body.name) {
         return this.sendBadRequest(res, 'subCategory Name Is Required.');
+      }
+      const sucategoryData = await subcategoryModel.findOne({ name: req.body.name, categoryId: req.body.categoryId });
+
+      if (sucategoryData) {
+        return this.sendBadRequest(res, 'Subcategory Name Is Already Available.');
       }
       const saveQueryParams = {
         name: req.body.name,
@@ -177,6 +182,14 @@ class SubcategoryController extends RequestBase {
 
   private updateSubcategory = async (req: express.Request, res: express.Response) => {
     try {
+      if (!req.body.name) {
+        return this.sendBadRequest(res, 'subCategory Name Is Required.');
+      }
+      const sucategoryData = await subcategoryModel.findOne({ name: req.body.name, categoryId: req.body.categoryId });
+
+      if (JSON.stringify(sucategoryData._id) !== JSON.stringify(req.params.id)) {
+        return this.sendBadRequest(res, 'Subcategory Name Is Already Available.');
+      }
       const saveQueryParams = {
         name: req.body.name,
         description: req.body.description,

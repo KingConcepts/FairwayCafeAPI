@@ -68,10 +68,22 @@ export class Authentication {
     });
   }
 
-  public validatePassword = function (password) {
+  public validatePassword(password) {
     const re = /^(?=.*[A-Za-z_@.\/#&+-])(?=.*\d)[A-Za-z_@.\/#&+\-\d]{8,}$/;
     return re.test(password);
   };
+
+  /** Used to generate random password */
+  public generateRandomString(length = 7) {
+    let result = '';
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const charactersLength = characters.length;
+    for (var i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    result += '$';
+    return result;
+  }
 }
 
 export default new Authentication;

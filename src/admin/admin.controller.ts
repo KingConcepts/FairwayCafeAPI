@@ -7,6 +7,7 @@ import { IResponse } from 'interfaces/response.interface';
 import RequestBase from '../response/response.controller';
 import authentication from '../utils/authentication';
 import TaxController from '../settings/tax/tax.controller';
+import authMiddleware from '../middleware/auth.middleware';
 
 class AdminController extends RequestBase {
   public path = '/api/admin';
@@ -18,7 +19,7 @@ class AdminController extends RequestBase {
   }
 
   private initializeRoutes() {
-    this.router.post(`${this.path}/change_password`, this.changePassword);
+    this.router.post(`${this.path}/change_password`, authMiddleware, this.changePassword);
     this.router.post(`${this.path}/login`, this.login);
     this.router.post(`${this.path}/forgot_password`, this.forgotPassword);
     this.router.post(`${this.path}/verify_forgot_password`, this.verifyForgotPassword);
@@ -60,7 +61,7 @@ class AdminController extends RequestBase {
       const getQueryParams = { email: req.body.email.toLowerCase() };
 
       const user = await adminModel.findOne(getQueryParams);
-      
+      console.log('user', user);
       const taxController = new TaxController();
       const tax = await taxController.getTaxValue();
 
@@ -68,6 +69,7 @@ class AdminController extends RequestBase {
         this.sendNotAuthorized(res);
       }
       const isPasswordMatched = await bycryptOprations.comparePassword(req.body.password, user.password);
+      console.log('isPasswordMatched', isPasswordMatched);
       if (isPasswordMatched) {
         const token = await authentication.genrateAdminToken(user._id);
         const insertUpdateQuery = {
@@ -106,18 +108,25 @@ class AdminController extends RequestBase {
 
   private forgotPassword = async (req: express.Request, res: express.Response) => {
     try {
-      const user = await adminModel.findOne({ username: req.body.username });
+      const user = await adminModel.findOne({ email: req.body.email.toLowerCase() });
       if (!user) {
         return this.sendBadRequest(res, 'User Not Available, Please Sign Up.');
       }
-      const token = await authentication.genrateAdminToken(user._id, true);
+
+      // const randomPassword = 'fairway@123';
+      const randomPassword = authentication.generateRandomString();
+      console.log('randomPassword', randomPassword);
+      const updateParams = {
+        password: await bycryptOprations.genratePasswordHash(randomPassword)
+      }
+      await adminModel.updateOne({ _id: user._id }, updateParams);
 
       /** Send Email */
 
       const resObj: IResponse = {
         res: res,
         status: 200,
-        message: 'Verification link sent Successfully',
+        message: 'Password sent Successfully',
         data: req.body
       }
       this.send(resObj);
@@ -127,6 +136,7 @@ class AdminController extends RequestBase {
     }
   }
 
+  /** Not in use */
   private verifyForgotPassword = async (req: express.Request, res: express.Response) => {
     try {
       const user = await adminModel.findOne({ username: req.body.username });

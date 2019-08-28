@@ -36,7 +36,7 @@ class ItemController extends RequestBase {
       queryParams.subcategoryId = mongoose.Types.ObjectId(req.params.subcategoryId);
       const page = req.query.page ? req.query.page : 0;
       const itemsCount = await itemModel.count();
-      const limit = page ? Number(req.query.limit) || Number(process.env.PAGE_LIMIT): 1000;
+      const limit = page ? Number(req.query.limit) || Number(process.env.PAGE_LIMIT) : 1000;
       const skip = page ? Number((page - 1) * limit) : 0;
       const pageCount = page ? itemsCount / limit : 0;
       const totalPage = page ? (pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount) : 0;
@@ -82,7 +82,7 @@ class ItemController extends RequestBase {
         status: 200,
         message: 'Item Loaded Successfully',
         data: itemRes
-        
+
       }
       this.send(resObj);
     } catch (e) {
@@ -138,6 +138,11 @@ class ItemController extends RequestBase {
       if (!req.body.name) {
         return this.sendBadRequest(res, 'Item Name Is Required.');
       }
+      const itemData = await itemModel.findOne({ subcategoryId: req.body.subcategoryId, name: req.body.name });
+
+      if (itemData) {
+        return this.sendBadRequest(res, 'Item Name Is Already Available.');
+      }
       const saveQueryParams = {
         name: req.body.name,
         description: req.body.description || '',
@@ -163,6 +168,14 @@ class ItemController extends RequestBase {
 
   private updateItem = async (req: express.Request, res: express.Response) => {
     try {
+      if (!req.body.name) {
+        return this.sendBadRequest(res, 'Item Name Is Required.');
+      }
+      const itemData = await itemModel.findOne({ subcategoryId: req.body.subcategoryId, name: req.body.name });
+
+      if (JSON.stringify(itemData._id) !== JSON.stringify(req.params.id)) {
+        return this.sendBadRequest(res, 'Item Name Is Already Available.');
+      }
       const saveQueryParams = {
         name: req.body.name,
         description: req.body.description,

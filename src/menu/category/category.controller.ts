@@ -84,12 +84,17 @@ class CategoryController extends RequestBase {
       if (!req.body.name) {
         return this.sendBadRequest(res, 'Category Name Is Required.');
       }
+      const catData = await categoryModel.findOne({ name: req.body.name });
+      
+      if (catData) {
+        return this.sendBadRequest(res, 'Category Name Is Already Available.');
+      }
       const saveQueryParams = {
         name: req.body.name,
         description: req.body.description || '',
         imageURL: req.file && req.file.filename || '',
       };
-      const createdData = new categoryModel(saveQueryParams);
+      const createdData = await new categoryModel(saveQueryParams);
       const result = await createdData.save();
       const resObj: IResponse = {
         res: res,
@@ -133,6 +138,14 @@ class CategoryController extends RequestBase {
 
   private updateCategory = async (req: express.Request, res: express.Response) => {
     try {
+      if (!req.body.name) {
+        return this.sendBadRequest(res, 'Category Name Is Required.');
+      }
+      const catData = await categoryModel.findOne({ name: req.body.name });
+      
+      if (JSON.stringify(catData._id) !== JSON.stringify(req.params.id)) {
+        return this.sendBadRequest(res, 'Category Name Is Already Available.');
+      }
       const saveQueryParams = {
         name: req.body.name,
         description: req.body.description,
