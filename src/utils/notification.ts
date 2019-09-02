@@ -7,11 +7,11 @@ export class Notification {
             const smtpConfig = {
                 // service: 'Gmail',
                 host: 'smtp.gmail.com',
-                port: 587,
-                tls: {
-                    ciphers: 'SSLv3'
-                },
-                secure: false,
+                // port: 587,
+                // tls: {
+                //     ciphers: 'SSLv3'
+                // },
+                // secure: false,
                 auth: {
                     user: 'rspl.fe@gmail.com',
                     pass: 'rspl123#'

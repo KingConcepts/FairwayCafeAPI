@@ -18,11 +18,67 @@ class SubcategoryController extends RequestBase {
   }
 
   private initializeRoutes() {
+    this.router.get(`${this.path}/subcategories`, authMiddleware, adminMiddleware, this.getAllSubcategory);
     this.router.get(`${this.path}/:categoryId/subcategories`, authMiddleware, this.getAllSubcategoryWithItems);
     // this.router.get(`${this.path}/:categoryId/subcategories`, this.getAllSubcategoryWithItems);
     this.router.post(`${this.path}/subcategories`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.createSubcategory);
     this.router.get(`${this.path}/subcategories/:id`, authMiddleware, this.getSubcategory);
     this.router.put(`${this.path}/subcategories/:id`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.updateSubcategory);
+  }
+
+  private getAllSubcategory = async (req: express.Request, res: express.Response) => {
+    try {
+      let result: any;
+      let queryParams: any = {};
+      const page = req.query.page ? req.query.page : 0;
+      const limit = page ? Number(req.query.limit) || Number(process.env.PAGE_LIMIT) : 1000;
+      const skip = page ? Number((page - 1) * limit) : 0;
+      
+
+      if (req.query.keyword) {
+        queryParams.name = new RegExp(`${req.query.keyword}`, 'i');
+      }
+      result = await subcategoryModel.aggregate([
+        { $match: queryParams },
+        { $skip: skip },
+        { $limit: limit },
+        {
+          $lookup:
+          {
+            from: 'categories',
+            localField: 'categoryId',
+            foreignField: '_id',
+            as: 'category',
+          }
+        }
+      ]);
+
+      result.map((subcategory) => {
+        subcategory.imageURL = subcategory.imageURL ? `${process.env.IMAGE_LOCATION}${subcategory.imageURL}` : process.env.DEFAULT_IMAGE;
+        return subcategory.category.map((item) => {
+          item.imageURL = item.imageURL ? `${process.env.IMAGE_LOCATION}${item.imageURL}` : process.env.DEFAULT_IMAGE;
+        })
+      });
+      const pageCount = page ? result.length / limit : 0;
+      const totalPage = page ? (pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount) : 0;
+      const subCategoryRes = {
+        subcategries: result,
+        totalPage,
+        subcategoriesCount: result.length,
+        page: Number(page)
+      }
+
+      const resObj: IResponse = {
+        res: res,
+        status: 200,
+        message: 'Subcategory Loaded Successfully',
+        data: subCategoryRes
+      }
+      this.send(resObj);
+    } catch (e) {
+      console.log('getAllSubcategory', e);
+      this.sendServerError(res, e.message);
+    }
   }
 
   private getAllSubcategoryWithItems = async (req: express.Request, res: express.Response) => {
@@ -104,7 +160,7 @@ class SubcategoryController extends RequestBase {
         subCategoryRes = {
           subcategries: result,
           totalPage,
-          subcategoriesCount,
+          subcategoriesCount: result.length,
           page: Number(page)
         }
       }
@@ -117,7 +173,7 @@ class SubcategoryController extends RequestBase {
       }
       this.send(resObj);
     } catch (e) {
-      console.log('getAllCategory', e);
+      console.log('getAllSubcategoryWithItems', e);
       this.sendServerError(res, e.message);
     }
   }
@@ -191,19 +247,19 @@ class SubcategoryController extends RequestBase {
         return this.sendBadRequest(res, 'Subcategory Name Is Already Available.');
       }
       const saveQueryParams = {
-        name: req.body.name,
-        description: req.body.description,
-        status: req.body.status,
-        imageURL: req.file && req.file.filename || '',
-        categoryId: req.body.categoryId
+        ...req.body,
       };
+
+      if (req.file && req.file.filename) {
+        saveQueryParams.imageURL = req.file.filename;
+      }
       const result = await subcategoryModel.findOneAndUpdate({ _id: req.params.id }, saveQueryParams);
 
       const resObj: IResponse = {
         res: res,
         status: 201,
         message: 'Subcategory updated Successfully',
-        data: result
+        data: saveQueryParams
       }
       this.send(resObj);
     } catch (e) {

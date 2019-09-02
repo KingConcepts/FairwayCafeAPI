@@ -186,7 +186,7 @@ class OrderController extends RequestBase {
   private getAllOrders = async (req: express.Request, res: express.Response) => {
     try {
       const page = req.query.page ? req.query.page : 1;
-      const ordersCount = await orderModel.count();
+      // const ordersCount = await orderModel.count();
       const limit = Number(req.query.limit) || Number(process.env.PAGE_LIMIT);
       const skip = Number((page - 1) * limit);
       let queryParams = {};
@@ -200,6 +200,15 @@ class OrderController extends RequestBase {
         { $skip: skip },
         { $limit: limit },
         { $sort: { updatedAt: -1 } },
+        {
+          $lookup:
+          {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user"
+          }
+        },
         {
           $lookup:
           {
@@ -219,6 +228,7 @@ class OrderController extends RequestBase {
         }
       ]);
       orders.map((order) => {
+        order.user = order.user[0];
         order.categoryList.map((element) => {
           return element.imageURL = element.imageURL ? `${process.env.IMAGE_LOCATION}${element.imageURL}` : process.env.DEFAULT_IMAGE;
         });
@@ -238,11 +248,11 @@ class OrderController extends RequestBase {
         delete order.itemList;
         delete order.categoryList;
       });
-      let pageCount = ordersCount / limit;
+      let pageCount =  orders.length/ limit;
       const totalPage = pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount
       const orderRes = {
         orders,
-        ordersCount,
+        ordersCount: orders.length,
         page: Number(page),
         totalPage
       }

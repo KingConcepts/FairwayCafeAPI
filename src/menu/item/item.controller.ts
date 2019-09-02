@@ -25,21 +25,92 @@ class ItemController extends RequestBase {
   private initializeRoutes() {
     this.router.get(`${this.path}/items/:id`, authMiddleware, this.getItem);
     this.router.post(`${this.path}/items`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.createItem);
-    this.router.get(`${this.path}/:subcategoryId/items`, authMiddleware, this.getAllItems);
+    this.router.get(`${this.path}/:subcategoryId/items`, authMiddleware, this.getAllItemsBySubcategoryID);
     this.router.put(`${this.path}/items/:id`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.updateItem);
+    this.router.get(`${this.path}/items`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.getItems);
   }
 
-  private getAllItems = async (req: express.Request, res: express.Response) => {
+  private getItems = async (req: express.Request, res: express.Response) => {
+    try {
+      let queryParams: any = {};
+      let items: any = [];
+      const page = req.query.page ? req.query.page : 0;
+      const limit = page ? Number(req.query.limit) || Number(process.env.PAGE_LIMIT) : 1000;
+      const skip = page ? Number((page - 1) * limit) : 0;
+
+      if (req.query.keyword) {
+        queryParams.name = new RegExp(`${req.query.keyword}`, 'i');
+      }
+      items = await itemModel.aggregate([
+        { $match: queryParams },
+        { $skip: skip },
+        { $limit: limit },
+        {
+          $lookup:
+          {
+            from: 'subcategories',
+            localField: 'subcategoryId',
+            foreignField: '_id',
+            as: 'subcategory',
+          }
+        },
+        {
+          $lookup:
+          {
+            from: 'categories',
+            localField: 'subcategory.categoryId',
+            foreignField: '_id',
+            as: 'category',
+          }
+        }
+      ]);
+
+      if (!items.length) {
+        return this.sendBadRequest(res, 'Items Are Not Availabale.');
+      }
+
+      items.map((item) => {
+        item.imageURL = item.imageURL ? `${process.env.IMAGE_LOCATION}${item.imageURL}` : process.env.DEFAULT_IMAGE;
+        item.category.map((cat) => {
+          cat.imageURL = cat.imageURL ? `${process.env.IMAGE_LOCATION}${cat.imageURL}` : process.env.DEFAULT_IMAGE;
+        });
+        return item.subcategory.map((subcat) => {
+          subcat.imageURL = subcat.imageURL ? `${process.env.IMAGE_LOCATION}${subcat.imageURL}` : process.env.DEFAULT_IMAGE;
+        });
+      });
+
+      const pageCount = page ? items.length / limit : 0;
+      const totalPage = page ? (pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount) : 0;
+
+      let itemRes = {
+        items,
+        totalPage,
+        itemsCount: items.length,
+        page: Number(page)
+      }
+      const resObj: IResponse = {
+        res: res,
+        status: 200,
+        message: 'Items Loaded Successfully',
+        data: itemRes
+
+      }
+      this.send(resObj);
+    } catch (e) {
+      console.log('getItems', e);
+      this.sendServerError(res, e.message);
+    }
+  }
+
+  private getAllItemsBySubcategoryID = async (req: express.Request, res: express.Response) => {
     try {
       let queryParams: any = {};
       let items: any = [];
       queryParams.subcategoryId = mongoose.Types.ObjectId(req.params.subcategoryId);
       const page = req.query.page ? req.query.page : 0;
-      const itemsCount = await itemModel.count();
       const limit = page ? Number(req.query.limit) || Number(process.env.PAGE_LIMIT) : 1000;
       const skip = page ? Number((page - 1) * limit) : 0;
-      const pageCount = page ? itemsCount / limit : 0;
-      const totalPage = page ? (pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount) : 0;
+      
       if (!req.isAdmin) {
         queryParams.status = true;
         items = await itemModel.find(queryParams).skip(skip).limit(limit);
@@ -66,27 +137,28 @@ class ItemController extends RequestBase {
       // subcategory.imageURL = subcategory.imageURL ? `${process.env.IMAGE_LOCATION}${subcategory.imageURL}` : process.env.DEFAULT_IMAGE;
       // category.imageURL = category.imageURL ? `${process.env.IMAGE_LOCATION}${category.imageURL}` : process.env.DEFAULT_IMAGE;
       let itemRes;
-
+      const pageCount = page ? items.length / limit : 0;
+      const totalPage = page ? (pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount) : 0;
       if (!req.isAdmin) {
         itemRes = items;
       } else {
         itemRes = {
           items,
           totalPage,
-          itemsCount,
+          itemsCount: items.length,
           page: Number(page)
         }
       }
       const resObj: IResponse = {
         res: res,
         status: 200,
-        message: 'Item Loaded Successfully',
+        message: 'Items Loaded Successfully',
         data: itemRes
 
       }
       this.send(resObj);
     } catch (e) {
-      console.log('getItem', e);
+      console.log('getAllItemsBySubcategoryID', e);
       this.sendServerError(res, e.message);
     }
   }
@@ -176,22 +248,30 @@ class ItemController extends RequestBase {
       if (JSON.stringify(itemData._id) !== JSON.stringify(req.params.id)) {
         return this.sendBadRequest(res, 'Item Name Is Already Available.');
       }
+      // const saveQueryParams = {
+      //   name: req.body.name,
+      //   description: req.body.description,
+      //   status: req.body.status,
+      //   imageURL: req.file && req.file.filename || '',
+      //   subcategoryId: req.body.subcategoryId,
+      //   quantity: req.body.quantity,
+      //   price: req.body.price
+      // };
+
       const saveQueryParams = {
-        name: req.body.name,
-        description: req.body.description,
-        status: req.body.status,
-        imageURL: req.file && req.file.filename || '',
-        subcategoryId: req.body.subcategoryId,
-        quantity: req.body.quantity,
-        price: req.body.price
+        ...req.body,
       };
+
+      if (req.file && req.file.filename) {
+        saveQueryParams.imageURL = req.file.filename;
+      }
       const result = await itemModel.findOneAndUpdate({ _id: req.params.id }, saveQueryParams);
 
       const resObj: IResponse = {
         res: res,
         status: 201,
         message: 'Item updated Successfully.',
-        data: result
+        data: saveQueryParams
       }
       this.send(resObj);
     } catch (e) {

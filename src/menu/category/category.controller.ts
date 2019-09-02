@@ -33,12 +33,9 @@ class CategoryController extends RequestBase {
         queryParams.status = true;
       }
       const page = req.query.page ? req.query.page : 0;
-      const categoriesCount = await categoryModel.count();
       const limit = page ? Number(req.query.limit) || Number(process.env.PAGE_LIMIT) : 1000;
       const skip = page ? Number((page - 1) * limit) : 0;
-      const pageCount = page ? categoriesCount / limit : 0;
-      const totalPage = page ? (pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount) : 0;
-
+      
       if (req.query.keyword) {
         categories = await categoryModel.aggregate([
           { $match: { name: new RegExp(`${req.query.keyword}`, 'i') } },
@@ -55,13 +52,16 @@ class CategoryController extends RequestBase {
 
       let categoryRes;
 
+      const pageCount = page ? categories.length / limit : 0;
+      const totalPage = page ? (pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount) : 0;
+
       if (!req.isAdmin) {
         categoryRes = categories;
       } else {
         categoryRes = {
           categories,
           totalPage,
-          categoriesCount,
+          categoriesCount: categories.length,
           page: Number(page)
         }
       }
@@ -146,19 +146,26 @@ class CategoryController extends RequestBase {
       if (JSON.stringify(catData._id) !== JSON.stringify(req.params.id)) {
         return this.sendBadRequest(res, 'Category Name Is Already Available.');
       }
+      // const saveQueryParams = {
+      //   name: req.body.name,
+      //   description: req.body.description,
+      //   status: req.body.status,
+      //   imageURL: req.file && req.file.filename || ''
+      // };
       const saveQueryParams = {
-        name: req.body.name,
-        description: req.body.description,
-        status: req.body.status,
-        imageURL: req.file && req.file.filename || ''
+        ...req.body,
       };
+
+      if (req.file && req.file.filename) {
+        saveQueryParams.imageURL = req.file.filename;
+      }
       const result = await categoryModel.findOneAndUpdate({ _id: req.params.id }, saveQueryParams);
 
       const resObj: IResponse = {
         res: res,
         status: 201,
         message: 'Category updated Successfully',
-        data: result
+        data: saveQueryParams
       }
       this.send(resObj);
     } catch (e) {

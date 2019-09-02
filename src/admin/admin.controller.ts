@@ -8,6 +8,7 @@ import RequestBase from '../response/response.controller';
 import authentication from '../utils/authentication';
 import TaxController from '../settings/tax/tax.controller';
 import authMiddleware from '../middleware/auth.middleware';
+import notification from '../utils/notification';
 
 class AdminController extends RequestBase {
   public path = '/api/admin';
@@ -23,6 +24,7 @@ class AdminController extends RequestBase {
     this.router.post(`${this.path}/login`, this.login);
     this.router.post(`${this.path}/forgot_password`, this.forgotPassword);
     this.router.post(`${this.path}/verify_forgot_password`, this.verifyForgotPassword);
+    this.router.get(`${this.path}/test`, this.test);
   }
 
   private changePassword = async (req: express.Request, res: express.Response) => {
@@ -135,7 +137,6 @@ class AdminController extends RequestBase {
       this.sendServerError(res, e.message);
     }
   }
-
   /** Not in use */
   private verifyForgotPassword = async (req: express.Request, res: express.Response) => {
     try {
@@ -172,6 +173,11 @@ class AdminController extends RequestBase {
       console.log('changePassword', e);
       this.sendServerError(res, e.message);
     }
+  }
+   
+  private test = async (req: express.Request, res: express.Response) => {
+    notification.sendEmail();
+    res.send('Ok');
   }
 }
 
