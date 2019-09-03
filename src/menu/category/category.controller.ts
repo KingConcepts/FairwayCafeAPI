@@ -22,7 +22,7 @@ class CategoryController extends RequestBase {
     this.router.get(`${this.path}/categories`, authMiddleware, this.getAllCategory);
     this.router.post(`${this.path}/categories`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.createCategory);
     this.router.get(`${this.path}/categories/:id`, authMiddleware, this.getCategory);
-    this.router.put(`${this.path}/categories/:id`, authMiddleware, fileUploads.uploadFile().single('image'), this.updateCategory);
+    this.router.put(`${this.path}/categories/:id`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.updateCategory);
     this.router.delete(`${this.path}/categories/:id`, authMiddleware, adminMiddleware, this.deleteCategory);
   }
 
