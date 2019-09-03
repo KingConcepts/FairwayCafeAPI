@@ -19,7 +19,7 @@ class SubcategoryController extends RequestBase {
   }
 
   private initializeRoutes() {
-    this.router.get(`${this.path}/subcategories`, authMiddleware, adminMiddleware, this.getAllSubcategory);
+    this.router.get(`${this.path}/subcategories`, authMiddleware, this.getAllSubcategory);
     this.router.get(`${this.path}/:categoryId/subcategories`, authMiddleware, this.getAllSubcategoryWithItems);
     // this.router.get(`${this.path}/:categoryId/subcategories`, this.getAllSubcategoryWithItems);
     this.router.post(`${this.path}/subcategories`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.createSubcategory);
@@ -58,14 +58,15 @@ class SubcategoryController extends RequestBase {
 
       result.map((subcategory) => {
         subcategory.imageURL = subcategory.imageURL ? `${process.env.IMAGE_LOCATION}${subcategory.imageURL}` : process.env.DEFAULT_IMAGE;
-        return subcategory.category.map((item) => {
+        subcategory.category.map((item) => {
           item.imageURL = item.imageURL ? `${process.env.IMAGE_LOCATION}${item.imageURL}` : process.env.DEFAULT_IMAGE;
-        })
+        });
+        subcategory.category = subcategory.category[0];
       });
       const pageCount = page ? result.length / limit : 0;
       const totalPage = page ? (pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount) : 0;
       const subCategoryRes = {
-        subcategries: result,
+        subcategories: result,
         totalPage,
         subcategoriesCount: result.length,
         page: Number(page)

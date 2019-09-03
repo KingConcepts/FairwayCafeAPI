@@ -27,8 +27,8 @@ class ItemController extends RequestBase {
     this.router.post(`${this.path}/items`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.createItem);
     this.router.get(`${this.path}/:subcategoryId/items`, authMiddleware, this.getAllItemsBySubcategoryID);
     this.router.put(`${this.path}/items/:id`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.updateItem);
-    this.router.get(`${this.path}/items`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.getItems);
-    this.router.delete(`${this.path}/items/:id`, authMiddleware, adminMiddleware,this.deleteItem);
+    this.router.get(`${this.path}/items`, authMiddleware, this.getItems);
+    this.router.delete(`${this.path}/items/:id`, authMiddleware, adminMiddleware, this.deleteItem);
   }
 
   private getItems = async (req: express.Request, res: express.Response) => {
@@ -76,9 +76,11 @@ class ItemController extends RequestBase {
         item.category.map((cat) => {
           cat.imageURL = cat.imageURL ? `${process.env.IMAGE_LOCATION}${cat.imageURL}` : process.env.DEFAULT_IMAGE;
         });
-        return item.subcategory.map((subcat) => {
+        item.subcategory.map((subcat) => {
           subcat.imageURL = subcat.imageURL ? `${process.env.IMAGE_LOCATION}${subcat.imageURL}` : process.env.DEFAULT_IMAGE;
         });
+        item.category = item.category[0];
+        item.subcategory = item.subcategory[0];
       });
 
       const pageCount = page ? items.length / limit : 0;
@@ -112,7 +114,7 @@ class ItemController extends RequestBase {
       const page = req.query.page ? req.query.page : 0;
       const limit = page ? Number(req.query.limit) || Number(process.env.PAGE_LIMIT) : 1000;
       const skip = page ? Number((page - 1) * limit) : 0;
-      
+
       if (!req.isAdmin) {
         queryParams.status = true;
         items = await itemModel.find(queryParams).skip(skip).limit(limit);
@@ -243,7 +245,7 @@ class ItemController extends RequestBase {
 
   private updateItem = async (req: express.Request, res: express.Response) => {
     try {
-     
+
       const itemData = await itemModel.findOne({ subcategoryId: req.body.subcategoryId, name: req.body.name });
 
       if (itemData && JSON.stringify(itemData._id) !== JSON.stringify(req.params.id)) {
