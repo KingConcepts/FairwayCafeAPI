@@ -6,6 +6,7 @@ import authMiddleware from '../../middleware/auth.middleware';
 import { IResponse } from '../../interfaces/response.interface';
 import fileUploads from '../../utils/fileUploads';
 import adminMiddleware from '../../middleware/admin.middleware';
+import subcategoryModel from '../../menu/subcategory/subcategory.model';
 
 class CategoryController extends RequestBase {
 
@@ -21,7 +22,8 @@ class CategoryController extends RequestBase {
     this.router.get(`${this.path}/categories`, authMiddleware, this.getAllCategory);
     this.router.post(`${this.path}/categories`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.createCategory);
     this.router.get(`${this.path}/categories/:id`, authMiddleware, this.getCategory);
-    this.router.put(`${this.path}/categories/:id`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.updateCategory);
+    this.router.put(`${this.path}/categories/:id`, authMiddleware, fileUploads.uploadFile().single('image'), this.updateCategory);
+    this.router.delete(`${this.path}/categories/:id`, authMiddleware, adminMiddleware, this.deleteCategory);
   }
 
   private getAllCategory = async (req: express.Request, res: express.Response) => {
@@ -35,16 +37,17 @@ class CategoryController extends RequestBase {
       const page = req.query.page ? req.query.page : 0;
       const limit = page ? Number(req.query.limit) || Number(process.env.PAGE_LIMIT) : 1000;
       const skip = page ? Number((page - 1) * limit) : 0;
-      
+
       if (req.query.keyword) {
-        categories = await categoryModel.aggregate([
-          { $match: { name: new RegExp(`${req.query.keyword}`, 'i') } },
-          { $skip: skip },
-          { $limit: limit }
-        ]);
-      } else {
-        categories = await categoryModel.find(queryParams).skip(skip).limit(limit);
+        queryParams.name = new RegExp(`${req.query.keyword}`, 'i')
       }
+
+      categories = await categoryModel.aggregate([
+        { $match: queryParams },
+        { $skip: skip },
+        { $limit: limit },
+        { $sort: { updatedAt: -1 } },
+      ]);
 
       categories.map((category) => {
         return category.imageURL = category.imageURL ? `${process.env.IMAGE_LOCATION}${category.imageURL}` : process.env.DEFAULT_IMAGE;
@@ -85,7 +88,7 @@ class CategoryController extends RequestBase {
         return this.sendBadRequest(res, 'Category Name Is Required.');
       }
       const catData = await categoryModel.findOne({ name: req.body.name });
-      
+
       if (catData) {
         return this.sendBadRequest(res, 'Category Name Is Already Available.');
       }
@@ -120,7 +123,9 @@ class CategoryController extends RequestBase {
         queryParams._id = req.params.id;
       }
       const category = await categoryModel.findOne(queryParams);
-
+      if (!category) {
+        return this.sendBadRequest(res, 'Category Is Not Availabale.');
+      }
       category.imageURL = category.imageURL ? `${process.env.IMAGE_LOCATION}${category.imageURL}` : process.env.DEFAULT_IMAGE;
 
       const resObj: IResponse = {
@@ -138,12 +143,10 @@ class CategoryController extends RequestBase {
 
   private updateCategory = async (req: express.Request, res: express.Response) => {
     try {
-      if (!req.body.name) {
-        return this.sendBadRequest(res, 'Category Name Is Required.');
-      }
+
       const catData = await categoryModel.findOne({ name: req.body.name });
-      
-      if (JSON.stringify(catData._id) !== JSON.stringify(req.params.id)) {
+
+      if (catData && JSON.stringify(catData._id) !== JSON.stringify(req.params.id)) {
         return this.sendBadRequest(res, 'Category Name Is Already Available.');
       }
       // const saveQueryParams = {
@@ -173,6 +176,29 @@ class CategoryController extends RequestBase {
       this.sendServerError(res, e.message);
     }
   }
+
+  private deleteCategory = async (req: express.Request, res: express.Response) => {
+    try {
+      const items = await subcategoryModel.find({ categoryId: req.params.id });
+
+      if (items.length) {
+        return this.sendBadRequest(res, 'You can not remove Category, Subcategories are still available with this category.');
+      }
+      await subcategoryModel.remove({ _id: req.params.id });
+
+      const resObj: IResponse = {
+        res: res,
+        status: 200,
+        message: 'Category deleted Successfully.',
+        data: {}
+      }
+      this.send(resObj);
+    } catch (e) {
+      console.log('deleteCategory', e);
+      this.sendServerError(res, e.message);
+    }
+  }
+
 }
 
 export default CategoryController;

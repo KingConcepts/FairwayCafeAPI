@@ -7,6 +7,7 @@ import authMiddleware from '../../middleware/auth.middleware';
 import { IResponse } from '../../interfaces/response.interface';
 import adminMiddleware from '../../middleware/admin.middleware';
 import fileUploads from '../../utils/fileUploads';
+import itemModel from '../../menu/item/item.model';
 
 class SubcategoryController extends RequestBase {
   public path = '/api/menu';
@@ -24,6 +25,7 @@ class SubcategoryController extends RequestBase {
     this.router.post(`${this.path}/subcategories`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.createSubcategory);
     this.router.get(`${this.path}/subcategories/:id`, authMiddleware, this.getSubcategory);
     this.router.put(`${this.path}/subcategories/:id`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.updateSubcategory);
+    this.router.delete(`${this.path}/subcategories/:id`, authMiddleware, adminMiddleware, this.deleteSubcategory);
   }
 
   private getAllSubcategory = async (req: express.Request, res: express.Response) => {
@@ -33,7 +35,7 @@ class SubcategoryController extends RequestBase {
       const page = req.query.page ? req.query.page : 0;
       const limit = page ? Number(req.query.limit) || Number(process.env.PAGE_LIMIT) : 1000;
       const skip = page ? Number((page - 1) * limit) : 0;
-      
+
 
       if (req.query.keyword) {
         queryParams.name = new RegExp(`${req.query.keyword}`, 'i');
@@ -42,6 +44,7 @@ class SubcategoryController extends RequestBase {
         { $match: queryParams },
         { $skip: skip },
         { $limit: limit },
+        { $sort: { updatedAt: -1 } },
         {
           $lookup:
           {
@@ -99,6 +102,7 @@ class SubcategoryController extends RequestBase {
           { $match: queryParams },
           { $skip: skip },
           { $limit: limit },
+          { $sort: { updatedAt: -1 } },
           {
             $lookup:
             {
@@ -133,6 +137,7 @@ class SubcategoryController extends RequestBase {
           { $match: queryParams },
           { $skip: skip },
           { $limit: limit },
+          { $sort: { updatedAt: -1 } },
           {
             $lookup:
             {
@@ -221,6 +226,9 @@ class SubcategoryController extends RequestBase {
       }
       const category = await subcategoryModel.findOne(queryParams);
 
+      if (!category) {
+        return this.sendBadRequest(res, 'Subcategory Is Not Availabale.');
+      }
       category.imageURL = category.imageURL ? `${process.env.IMAGE_LOCATION}${category.imageURL}` : process.env.DEFAULT_IMAGE;
 
       const resObj: IResponse = {
@@ -238,12 +246,10 @@ class SubcategoryController extends RequestBase {
 
   private updateSubcategory = async (req: express.Request, res: express.Response) => {
     try {
-      if (!req.body.name) {
-        return this.sendBadRequest(res, 'subCategory Name Is Required.');
-      }
+
       const sucategoryData = await subcategoryModel.findOne({ name: req.body.name, categoryId: req.body.categoryId });
 
-      if (JSON.stringify(sucategoryData._id) !== JSON.stringify(req.params.id)) {
+      if (sucategoryData && JSON.stringify(sucategoryData._id) !== JSON.stringify(req.params.id)) {
         return this.sendBadRequest(res, 'Subcategory Name Is Already Available.');
       }
       const saveQueryParams = {
@@ -264,6 +270,29 @@ class SubcategoryController extends RequestBase {
       this.send(resObj);
     } catch (e) {
       console.log('updateSubcategory', e);
+      this.sendServerError(res, e.message);
+    }
+  }
+
+  private deleteSubcategory = async (req: express.Request, res: express.Response) => {
+    try {
+      const items = await itemModel.find({ subcategoryId: req.params.id });
+      console.log('items', items);
+      if (items.length) {
+        return this.sendBadRequest(res, 'You can not remove Subcategory, Items are still available with this category.');
+      }
+
+      await subcategoryModel.remove({ _id: req.params.id });
+
+      const resObj: IResponse = {
+        res: res,
+        status: 200,
+        message: 'Subcategory deleted Successfully.',
+        data: {}
+      }
+      this.send(resObj);
+    } catch (e) {
+      console.log('deleteSubcategory', e);
       this.sendServerError(res, e.message);
     }
   }

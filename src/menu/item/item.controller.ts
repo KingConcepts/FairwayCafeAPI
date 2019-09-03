@@ -28,6 +28,7 @@ class ItemController extends RequestBase {
     this.router.get(`${this.path}/:subcategoryId/items`, authMiddleware, this.getAllItemsBySubcategoryID);
     this.router.put(`${this.path}/items/:id`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.updateItem);
     this.router.get(`${this.path}/items`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.getItems);
+    this.router.delete(`${this.path}/items/:id`, authMiddleware, adminMiddleware,this.deleteItem);
   }
 
   private getItems = async (req: express.Request, res: express.Response) => {
@@ -45,6 +46,7 @@ class ItemController extends RequestBase {
         { $match: queryParams },
         { $skip: skip },
         { $limit: limit },
+        { $sort: { updatedAt: -1 } },
         {
           $lookup:
           {
@@ -120,6 +122,7 @@ class ItemController extends RequestBase {
             { $match: { name: new RegExp(`${req.query.keyword}`, 'i') } },
             { $skip: skip },
             { $limit: limit },
+            { $sort: { updatedAt: -1 } },
           ]);
         } else {
           items = await itemModel.find(queryParams).skip(skip).limit(limit);
@@ -240,12 +243,10 @@ class ItemController extends RequestBase {
 
   private updateItem = async (req: express.Request, res: express.Response) => {
     try {
-      if (!req.body.name) {
-        return this.sendBadRequest(res, 'Item Name Is Required.');
-      }
+     
       const itemData = await itemModel.findOne({ subcategoryId: req.body.subcategoryId, name: req.body.name });
 
-      if (JSON.stringify(itemData._id) !== JSON.stringify(req.params.id)) {
+      if (itemData && JSON.stringify(itemData._id) !== JSON.stringify(req.params.id)) {
         return this.sendBadRequest(res, 'Item Name Is Already Available.');
       }
       // const saveQueryParams = {
@@ -276,6 +277,24 @@ class ItemController extends RequestBase {
       this.send(resObj);
     } catch (e) {
       console.log('updateItem', e);
+      this.sendServerError(res, e.message);
+    }
+  }
+
+  private deleteItem = async (req: express.Request, res: express.Response) => {
+    try {
+
+      await itemModel.remove({ _id: req.params.id });
+
+      const resObj: IResponse = {
+        res: res,
+        status: 200,
+        message: 'Item deleted Successfully.',
+        data: {}
+      }
+      this.send(resObj);
+    } catch (e) {
+      console.log('deleteItem', e);
       this.sendServerError(res, e.message);
     }
   }
