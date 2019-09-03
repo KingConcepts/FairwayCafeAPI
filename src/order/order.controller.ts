@@ -24,11 +24,11 @@ class OrderController extends RequestBase {
   }
 
   private initializeRoutes() {
+    this.router.get(`${this.path}/all`, authMiddleware, this.getAllOrdersForAdmin);
     this.router.get(`${this.path}/csv-upload/job`, this.uploadOrderCSV);
     this.router.post(`${this.path}`, authMiddleware, this.createOrder);
     this.router.get(`${this.path}/:id`, authMiddleware, this.getOrder);
     this.router.get(`${this.path}`, authMiddleware, this.getAllOrders);
-
   }
 
   /** Caculates total quantity and sub total of all the items in cart */
@@ -183,20 +183,88 @@ class OrderController extends RequestBase {
 
   }
 
+  /** Get orders for user */
   private getAllOrders = async (req: express.Request, res: express.Response) => {
     try {
       const page = req.query.page ? req.query.page : 1;
       // const ordersCount = await orderModel.count();
       const limit = Number(req.query.limit) || Number(process.env.PAGE_LIMIT);
       const skip = Number((page - 1) * limit);
-      let queryParams = {};
 
-      if (!req.isAdmin) {
-        queryParams = { userId: mongoose.Types.ObjectId(req.user.id) }
-      }
       const orders = await orderModel.aggregate([
-        // { $match: { userId: mongoose.Types.ObjectId(req.user.id) } },
-        { $match: queryParams },
+        { $match: { userId: mongoose.Types.ObjectId(req.user.id) } },
+        { $skip: skip },
+        { $limit: limit },
+        { $sort: { updatedAt: -1 } },
+        {
+          $lookup:
+          {
+            from: "items",
+            localField: "items.itemId",
+            foreignField: "_id",
+            as: "itemList"
+          }
+        }, {
+          $lookup:
+          {
+            from: "categories",
+            localField: "items.categoryId",
+            foreignField: "_id",
+            as: "categoryList"
+          }
+        }
+      ]);
+      orders.map((order) => {
+        order.categoryList.map((element) => {
+          return element.imageURL = element.imageURL ? `${process.env.IMAGE_LOCATION}${element.imageURL}` : process.env.DEFAULT_IMAGE;
+        });
+        order.items.map(item => {
+          order.itemList.map(element => {
+            if (JSON.stringify(item.itemId) == JSON.stringify(element._id)) {
+              item.itemDetails = element;
+              item.itemDetails.imageURL = element.imageURL ? `${process.env.IMAGE_LOCATION}${element.imageURL}` : process.env.DEFAULT_IMAGE;
+            }
+          });
+          order.categoryList.map(element => {
+            if (JSON.stringify(item.categoryId) == JSON.stringify(element._id)) {
+              item.category = element;
+            }
+          });
+        });
+        delete order.itemList;
+        delete order.categoryList;
+      });
+      let pageCount =  orders.length/ limit;
+      const totalPage = pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount
+      const orderRes = {
+        orders,
+        ordersCount: orders.length,
+        page: Number(page),
+        totalPage
+      }
+      const resObj: IResponse = {
+        res: res,
+        status: 200,
+        message: 'Orders loaded Successfully',
+        data: orderRes
+      }
+      this.send(resObj);
+    } catch (e) {
+      console.log('getAllOrders', e);
+      this.sendServerError(res, e.message);
+    }
+
+  }
+
+  /** Get orders for admin */
+  private getAllOrdersForAdmin = async (req: express.Request, res: express.Response) => {
+    try {
+      const page = req.query.page ? req.query.page : 1;
+      // const ordersCount = await orderModel.count();
+      const limit = Number(req.query.limit) || Number(process.env.PAGE_LIMIT);
+      const skip = Number((page - 1) * limit);
+     
+      const orders = await orderModel.aggregate([
         { $skip: skip },
         { $limit: limit },
         { $sort: { updatedAt: -1 } },
@@ -264,7 +332,7 @@ class OrderController extends RequestBase {
       }
       this.send(resObj);
     } catch (e) {
-      console.log('getAllOrders', e);
+      console.log('getAllOrdersForAdmin', e);
       this.sendServerError(res, e.message);
     }
 

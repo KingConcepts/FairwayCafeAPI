@@ -27,6 +27,8 @@ class UserController extends RequestBase {
     this.router.post(`${this.path}/change_password`, this.changePassword);
     this.router.put(`${this.path}/AD`, this.updateUsers);
     this.router.get(`${this.path}/AD/job`, this.updateUserFromADJob);
+    this.router.get(`${this.path}`, this.getAllUsers);
+
   }
 
   private changePassword = async (req: express.Request, res: express.Response) => {
@@ -242,6 +244,60 @@ class UserController extends RequestBase {
       this.sendServerError(res, e.message);
     }
   }
+
+  private getAllUsers = async (req: express.Request, res: express.Response) => {
+    try {
+
+      const requireFields = {
+        'empNumber': 1,
+        'email': 1,
+        'companyCode2': 1,
+        'lastName': 1,
+        'firstName': 1,
+        'username': 1,
+        'isRegistered': 1
+      }
+
+      let queryParams: any = {};
+      const page = req.query.page ? req.query.page : 1;
+      const limit = Number(req.query.limit) || Number(process.env.PAGE_LIMIT);
+      const skip = page ? Number((page - 1) * limit) : 0;
+      const usersCount = await userModel.count();
+
+      if (req.query.keyword) {
+        queryParams.name = new RegExp(`${req.query.keyword}`, 'i');
+      }
+      const users = await userModel.aggregate([
+        { $match: queryParams },
+        { $skip: skip },
+        { $limit: limit },
+        { $sort: { updatedAt: -1 } },
+        { $project: requireFields}
+      ]);
+
+      const pageCount =  usersCount / limit;
+      const totalPage = page ? (pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount) : 0;
+
+      const userRes = {
+        users,
+        totalPage,
+        usersCount,
+        page: Number(page)
+      }
+
+      const resObj: IResponse = {
+        res: res,
+        status: 200,
+        message: 'Users loaded Successfully',
+        data: userRes
+      }
+      this.send(resObj);
+    } catch (e) {
+      console.log('getAllUsers', e);
+      this.sendServerError(res, e.message);
+    }
+  }
+
 }
 
 export default UserController;
