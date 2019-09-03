@@ -19,6 +19,7 @@ class CategoryController extends RequestBase {
   }
 
   private initializeRoutes() {
+    this.router.get(`${this.path}/categories/all`, authMiddleware, this.getAllCategoryForDropdown);
     this.router.get(`${this.path}/categories`, authMiddleware, this.getAllCategory);
     this.router.post(`${this.path}/categories`, authMiddleware, adminMiddleware, fileUploads.uploadFile().single('image'), this.createCategory);
     this.router.get(`${this.path}/categories/:id`, authMiddleware, this.getCategory);
@@ -184,7 +185,7 @@ class CategoryController extends RequestBase {
       if (items.length) {
         return this.sendBadRequest(res, 'You can not remove Category, Subcategories are still available with this category.');
       }
-      await subcategoryModel.remove({ _id: req.params.id });
+      await categoryModel.remove({ _id: req.params.id });
 
       const resObj: IResponse = {
         res: res,
@@ -199,6 +200,26 @@ class CategoryController extends RequestBase {
     }
   }
 
+  private getAllCategoryForDropdown = async (req: express.Request, res: express.Response) => {
+    try {
+      let queryParams: any = {};
+      if (req.query.status && req.query.status !== 'null') {
+        queryParams.status = req.query.status;
+      }
+      const categories = await categoryModel.find(queryParams, {name: 1});
+
+      const resObj: IResponse = {
+        res: res,
+        status: 200,
+        message: 'Categories Loaded Successfully',
+        data: categories
+      }
+      this.send(resObj);
+    } catch (e) {
+      console.log('getAllCategoryForDropdown', e);
+      this.sendServerError(res, e.message);
+    }
+  }
 }
 
 export default CategoryController;
