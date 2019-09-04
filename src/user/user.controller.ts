@@ -39,7 +39,7 @@ class UserController extends RequestBase {
         const isPasswordValidate = authentication.validatePassword(req.body.password);
 
         if (!isPasswordValidate) {
-          return this.sendBadRequest(res, 'Password should a 8-character length with at least 1 alphabet and 1 number');
+          return this.sendBadRequest(res, 'Password should have atleast 6 character');
         }
         const updateParams = {
           password: await bycryptOprations.genratePasswordHash(req.body.password)
@@ -262,11 +262,11 @@ class UserController extends RequestBase {
       const page = req.query.page ? req.query.page : 1;
       const limit = Number(req.query.limit) || Number(process.env.PAGE_LIMIT);
       const skip = page ? Number((page - 1) * limit) : 0;
-      const usersCount = await userModel.count();
 
       if (req.query.keyword) {
-        queryParams.name = new RegExp(`${req.query.keyword}`, 'i');
+        queryParams.firstName = new RegExp(`${req.query.keyword}`, 'i');
       }
+      const usersCount = await userModel.count(queryParams);
       const users = await userModel.aggregate([
         { $match: queryParams },
         { $skip: skip },

@@ -187,7 +187,7 @@ class OrderController extends RequestBase {
   private getAllOrders = async (req: express.Request, res: express.Response) => {
     try {
       const page = req.query.page ? req.query.page : 1;
-      // const ordersCount = await orderModel.count();
+      const ordersCount = await orderModel.count({ userId: mongoose.Types.ObjectId(req.user.id) });
       const limit = Number(req.query.limit) || Number(process.env.PAGE_LIMIT);
       const skip = Number((page - 1) * limit);
 
@@ -234,11 +234,11 @@ class OrderController extends RequestBase {
         delete order.itemList;
         delete order.categoryList;
       });
-      let pageCount =  orders.length/ limit;
+      let pageCount =  ordersCount/ limit;
       const totalPage = pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount
       const orderRes = {
         orders,
-        ordersCount: orders.length,
+        ordersCount: ordersCount,
         page: Number(page),
         totalPage
       }
@@ -260,7 +260,7 @@ class OrderController extends RequestBase {
   private getAllOrdersForAdmin = async (req: express.Request, res: express.Response) => {
     try {
       const page = req.query.page ? req.query.page : 1;
-      // const ordersCount = await orderModel.count();
+      const ordersCount = await orderModel.count();
       const limit = Number(req.query.limit) || Number(process.env.PAGE_LIMIT);
       const skip = Number((page - 1) * limit);
      
@@ -316,11 +316,11 @@ class OrderController extends RequestBase {
         delete order.itemList;
         delete order.categoryList;
       });
-      let pageCount =  orders.length/ limit;
+      let pageCount =  ordersCount/ limit;
       const totalPage = pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount
       const orderRes = {
         orders,
-        ordersCount: orders.length,
+        ordersCount,
         page: Number(page),
         totalPage
       }

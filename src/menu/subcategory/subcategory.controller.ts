@@ -19,6 +19,7 @@ class SubcategoryController extends RequestBase {
   }
 
   private initializeRoutes() {
+    this.router.get(`${this.path}/subcategories/all`, authMiddleware, this.getAllSubcategoryForDropdown);
     this.router.get(`${this.path}/subcategories`, authMiddleware, this.getAllSubcategory);
     this.router.get(`${this.path}/:categoryId/subcategories`, authMiddleware, this.getAllSubcategoryWithItems);
     // this.router.get(`${this.path}/:categoryId/subcategories`, this.getAllSubcategoryWithItems);
@@ -40,6 +41,9 @@ class SubcategoryController extends RequestBase {
       if (req.query.keyword) {
         queryParams.name = new RegExp(`${req.query.keyword}`, 'i');
       }
+
+      const subcategoriesCount = await subcategoryModel.count(queryParams);
+
       result = await subcategoryModel.aggregate([
         { $match: queryParams },
         { $skip: skip },
@@ -63,12 +67,12 @@ class SubcategoryController extends RequestBase {
         });
         subcategory.category = subcategory.category[0];
       });
-      const pageCount = page ? result.length / limit : 0;
+      const pageCount = page ? subcategoriesCount / limit : 0;
       const totalPage = page ? (pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount) : 0;
       const subCategoryRes = {
         subcategories: result,
         totalPage,
-        subcategoriesCount: result.length,
+        subcategoriesCount,
         page: Number(page)
       }
 
@@ -91,8 +95,11 @@ class SubcategoryController extends RequestBase {
       let result: any;
 
       queryParams.categoryId = mongoose.Types.ObjectId(req.params.categoryId);
+      if (req.query.keyword) {
+        queryParams.name = new RegExp(`${req.query.keyword}`, 'i');
+      }
       const page = req.query.page ? req.query.page : 0;
-      const subcategoriesCount = await subcategoryModel.count();
+      const subcategoriesCount = await subcategoryModel.count(queryParams);
       const limit = page ? Number(req.query.limit) || Number(process.env.PAGE_LIMIT) : 1000;
       const skip = page ? Number((page - 1) * limit) : 0;
       const pageCount = page ? subcategoriesCount / limit : 0;
@@ -130,10 +137,7 @@ class SubcategoryController extends RequestBase {
           }
         ]);
       } else {
-        queryParams.categoryId = mongoose.Types.ObjectId(req.params.categoryId);
-        if (req.query.keyword) {
-          queryParams.name = new RegExp(`${req.query.keyword}`, 'i');
-        }
+
         result = await subcategoryModel.aggregate([
           { $match: queryParams },
           { $skip: skip },
@@ -166,7 +170,7 @@ class SubcategoryController extends RequestBase {
         subCategoryRes = {
           subcategries: result,
           totalPage,
-          subcategoriesCount: result.length,
+          subcategoriesCount,
           page: Number(page)
         }
       }
@@ -298,5 +302,26 @@ class SubcategoryController extends RequestBase {
     }
   }
 
+  private getAllSubcategoryForDropdown = async (req: express.Request, res: express.Response) => {
+    try {
+      let queryParams: any = {};
+
+      if (req.query.status && req.query.status !== 'null') {
+        queryParams.status = req.query.status;
+      }
+      const categories = await subcategoryModel.find(queryParams, { name: 1 });
+
+      const resObj: IResponse = {
+        res: res,
+        status: 200,
+        message: 'Subcategories Loaded Successfully',
+        data: categories
+      }
+      this.send(resObj);
+    } catch (e) {
+      console.log('getAllSubcategoryForDropdown', e);
+      this.sendServerError(res, e.message);
+    }
+  }
 }
 export default SubcategoryController;

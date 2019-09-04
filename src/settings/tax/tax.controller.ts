@@ -23,11 +23,11 @@ class TaxController extends RequestBase {
     this.router.put(`${this.path}/:id`, authMiddleware, adminMiddleware, this.updateTax);
   }
 
-  getTaxValue = () => {
+  getTaxValue = (isResId = false) => {
     return new Promise(async (resolve, reject) => {
       try {
         const tax = await taxModel.findOne({});
-        resolve(tax.value);
+        isResId ? resolve(tax) : resolve(tax.value);
       } catch (e) {
         console.log('getTaxValue', e);
         reject(e);
@@ -99,17 +99,23 @@ class TaxController extends RequestBase {
 
   private updateTax = async (req: express.Request, res: express.Response) => {
     try {
+
+      // const saveQueryParams = {
+      //   name: req.body.name,
+      //   description: req.body.description || '',
+      //   status: req.body.status,
+      //   value: Number(req.body.value).toFixed(2)
+      // };
+
       const saveQueryParams = {
-        name: req.body.name,
-        description: req.body.description || '',
-        status: req.body.status,
-        value: Number(req.body.value).toFixed(2)
+        ...req.body
       };
+
       const result = await taxModel.findOneAndUpdate({ _id: req.params.id }, saveQueryParams);
 
       const resObj: IResponse = {
         res: res,
-        status: 201,
+        status: 200,
         message: 'Tax updated Successfully',
         data: result
       }

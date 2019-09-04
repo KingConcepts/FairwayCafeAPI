@@ -59,7 +59,7 @@ class Authentication extends RequestBase {
       const isPasswordValidate = authentication.validatePassword(req.body.password);
 
       if (!isPasswordValidate) {
-        return this.sendBadRequest(res, 'Password should a 8-character length with at least 1 alphabet and 1 number');
+        return this.sendBadRequest(res, 'Password should have atleast 6 character');
       }
 
       if ((user.companyCode2 === 'CGC' || user.companyCode2 === 'CGI' || user.companyCode2 === 'CGS')

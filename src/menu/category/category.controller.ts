@@ -43,6 +43,7 @@ class CategoryController extends RequestBase {
         queryParams.name = new RegExp(`${req.query.keyword}`, 'i')
       }
 
+      const categoriesCount = await categoryModel.count(queryParams);
       categories = await categoryModel.aggregate([
         { $match: queryParams },
         { $skip: skip },
@@ -56,7 +57,7 @@ class CategoryController extends RequestBase {
 
       let categoryRes;
 
-      const pageCount = page ? categories.length / limit : 0;
+      const pageCount = page ? categoriesCount / limit : 0;
       const totalPage = page ? (pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount) : 0;
 
       if (!req.isAdmin) {

@@ -69,8 +69,13 @@ export class Authentication {
   }
 
   public validatePassword(password) {
-    const re = /^(?=.*[A-Za-z_@.\/#&+-])(?=.*\d)[A-Za-z_@.\/#&+\-\d]{8,}$/;
-    return re.test(password);
+    // const re = /^(?=.*[A-Za-z_@.\/#&+-])(?=.*\d)[A-Za-z_@.\/#&+\-\d]{8,}$/;
+    // return re.test(password);
+    const length = password.length;
+   if(length >= 6) {
+     return true;
+   }
+   return false;
   };
 
   /** Used to generate random password */

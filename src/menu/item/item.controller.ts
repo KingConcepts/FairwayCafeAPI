@@ -42,6 +42,7 @@ class ItemController extends RequestBase {
       if (req.query.keyword) {
         queryParams.name = new RegExp(`${req.query.keyword}`, 'i');
       }
+      const itemsCount = await itemModel.count(queryParams);
       items = await itemModel.aggregate([
         { $match: queryParams },
         { $skip: skip },
@@ -83,13 +84,13 @@ class ItemController extends RequestBase {
         item.subcategory = item.subcategory[0];
       });
 
-      const pageCount = page ? items.length / limit : 0;
+      const pageCount = page ? itemsCount / limit : 0;
       const totalPage = page ? (pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount) : 0;
 
       let itemRes = {
         items,
         totalPage,
-        itemsCount: items.length,
+        itemsCount,
         page: Number(page)
       }
       const resObj: IResponse = {
@@ -115,13 +116,18 @@ class ItemController extends RequestBase {
       const limit = page ? Number(req.query.limit) || Number(process.env.PAGE_LIMIT) : 1000;
       const skip = page ? Number((page - 1) * limit) : 0;
 
+      if (req.query.keyword) {
+        queryParams.name =  new RegExp(`${req.query.keyword}`, 'i');
+      }
+      const itemsCount = await itemModel.count(queryParams);
+
       if (!req.isAdmin) {
         queryParams.status = true;
         items = await itemModel.find(queryParams).skip(skip).limit(limit);
       } else {
         if (req.query.keyword) {
           items = await itemModel.aggregate([
-            { $match: { name: new RegExp(`${req.query.keyword}`, 'i') } },
+            { $match: queryParams.name },
             { $skip: skip },
             { $limit: limit },
             { $sort: { updatedAt: -1 } },
@@ -142,7 +148,7 @@ class ItemController extends RequestBase {
       // subcategory.imageURL = subcategory.imageURL ? `${process.env.IMAGE_LOCATION}${subcategory.imageURL}` : process.env.DEFAULT_IMAGE;
       // category.imageURL = category.imageURL ? `${process.env.IMAGE_LOCATION}${category.imageURL}` : process.env.DEFAULT_IMAGE;
       let itemRes;
-      const pageCount = page ? items.length / limit : 0;
+      const pageCount = page ? itemsCount / limit : 0;
       const totalPage = page ? (pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount) : 0;
       if (!req.isAdmin) {
         itemRes = items;
@@ -150,7 +156,7 @@ class ItemController extends RequestBase {
         itemRes = {
           items,
           totalPage,
-          itemsCount: items.length,
+          itemsCount,
           page: Number(page)
         }
       }

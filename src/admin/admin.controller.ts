@@ -35,16 +35,19 @@ class AdminController extends RequestBase {
         const isPasswordValidate = authentication.validatePassword(req.body.password);
 
         if (!isPasswordValidate) {
-          return this.sendBadRequest(res, 'Password should a 8-character length with at least 1 alphabet and 1 number');
+          return this.sendBadRequest(res, 'Password should have atleast 6 character');
         }
         const updateParams = {
           password: await bycryptOprations.genratePasswordHash(req.body.password)
         }
         await adminModel.updateOne({ _id: user._id }, updateParams);
-        await userTokenModel.findOneAndUpdate({ _id: req.body.id }, { status: 'Inactive' });
+
+        /** Currenly not required */
+        // await userTokenModel.findOneAndUpdate({ _id: req.body.id }, { status: 'Inactive' });
+
         const resObj: IResponse = {
           res: res,
-          status: 201,
+          status: 200,
           message: 'Password Changed Successfully',
           data: {}
         }
@@ -63,15 +66,13 @@ class AdminController extends RequestBase {
       const getQueryParams = { email: req.body.email.toLowerCase() };
 
       const user = await adminModel.findOne(getQueryParams);
-      console.log('user', user);
       const taxController = new TaxController();
-      const tax = await taxController.getTaxValue();
+      const tax: any = await taxController.getTaxValue(true);
 
       if (!user) {
         this.sendNotAuthorized(res);
       }
       const isPasswordMatched = await bycryptOprations.comparePassword(req.body.password, user.password);
-      console.log('isPasswordMatched', isPasswordMatched);
       if (isPasswordMatched) {
         const token = await authentication.genrateAdminToken(user._id);
         const insertUpdateQuery = {
@@ -87,7 +88,8 @@ class AdminController extends RequestBase {
           ...user._doc,
           token,
           settings: {
-            tax
+            tax: tax.value || '',
+            taxId: tax._id || ''
           }
         };
 
@@ -152,7 +154,7 @@ class AdminController extends RequestBase {
         const isPasswordValidate = authentication.validatePassword(req.body.password);
 
         if (!isPasswordValidate) {
-          return this.sendBadRequest(res, 'Password should a 8-character length with at least 1 alphabet and 1 number');
+          return this.sendBadRequest(res, 'Password should have atleast 6 character');
         }
         const updateParams = {
           password: await bycryptOprations.genratePasswordHash(req.body.password)
