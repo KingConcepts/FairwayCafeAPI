@@ -29,7 +29,7 @@ const orderSchema = new mongoose.Schema({
   },
   totalQuantity: { type: Number, required: true },
   totalTaxAmount: { type: String, required: true },
-  status: { type: Boolean, default: true },
+  status: { type: String, enum: ['Pending', 'Accepted', 'InKitchen', 'Dispatched', 'Delivered', 'Canceled'], default: 'Pending' },
 },
 {
     strict: false,

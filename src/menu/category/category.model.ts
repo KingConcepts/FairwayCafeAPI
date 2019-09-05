@@ -4,7 +4,7 @@ import ICategory from './category.interface';
 const categorySchema = new mongoose.Schema({
   name: { type: mongoose.Schema.Types.String, required: true},
   status: { type: Boolean, default: true },
-  description: { type: String, required: false },
+  description: { type: String, required: false, default: '' },
   imageURL: { type: String, default: '' },
   restaurantId: {
     type: mongoose.Schema.Types.ObjectId,

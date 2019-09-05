@@ -4,7 +4,7 @@ import ITax from './tax.interface';
 const taxSchema = new mongoose.Schema({
   name: { type: String, required: true },
   status: {type:Boolean, default: true},
-  description: { type: String, required: false },
+  description: { type: String, required: false, default: '' },
   value: { type: String, required: true },
 },
   {

@@ -13,6 +13,7 @@ import authMiddleware from '../middleware/auth.middleware';
 import { IResponse } from '../interfaces/response.interface';
 import IOrder from './order.interface';
 import TaxController from '../settings/tax/tax.controller';
+import adminMiddleware from '../middleware/admin.middleware';
 
 class OrderController extends RequestBase {
   public path = '/api/order';
@@ -29,6 +30,7 @@ class OrderController extends RequestBase {
     this.router.post(`${this.path}`, authMiddleware, this.createOrder);
     this.router.get(`${this.path}/:id`, authMiddleware, this.getOrder);
     this.router.get(`${this.path}`, authMiddleware, this.getAllOrders);
+    this.router.put(`${this.path}/:id`, authMiddleware, adminMiddleware, this.updateOrder);
   }
 
   /** Caculates total quantity and sub total of all the items in cart */
@@ -96,7 +98,6 @@ class OrderController extends RequestBase {
         subTotal: subTotal.toFixed(2),
         totalTaxAmount: totalTaxAmount.toFixed(2),
         total: (subTotal + totalTaxAmount).toFixed(2),
-        status: true
       };
       if (saveQueryParams.total != Number(req.body.total)) {
         return this.sendBadRequest(res, 'Price of some item has changed.');
@@ -234,7 +235,7 @@ class OrderController extends RequestBase {
         delete order.itemList;
         delete order.categoryList;
       });
-      let pageCount =  ordersCount/ limit;
+      let pageCount = ordersCount / limit;
       const totalPage = pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount
       const orderRes = {
         orders,
@@ -263,7 +264,7 @@ class OrderController extends RequestBase {
       const ordersCount = await orderModel.count();
       const limit = Number(req.query.limit) || Number(process.env.PAGE_LIMIT);
       const skip = Number((page - 1) * limit);
-     
+
       const orders = await orderModel.aggregate([
         { $skip: skip },
         { $limit: limit },
@@ -316,7 +317,7 @@ class OrderController extends RequestBase {
         delete order.itemList;
         delete order.categoryList;
       });
-      let pageCount =  ordersCount/ limit;
+      let pageCount = ordersCount / limit;
       const totalPage = pageCount % 1 ? Math.floor(pageCount) + 1 : pageCount
       const orderRes = {
         orders,
@@ -338,6 +339,24 @@ class OrderController extends RequestBase {
 
   }
 
+  private updateOrder = async (req: express.Request, res: express.Response) => {
+    try {
+
+      const order = await orderModel.findOneAndUpdate({ _id: req.params.id }, { status: req.body.status });
+      const resObj: IResponse = {
+        res: res,
+        status: 200,
+        message: 'Order status updated Successfully',
+        data: order
+      }
+      this.send(resObj);
+    } catch (e) {
+      console.log('updateOrder', e);
+      this.sendServerError(res, e.message);
+    }
+
+  }
+
   getAllOrdersToGenerateCSV = () => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -348,7 +367,8 @@ class OrderController extends RequestBase {
               "createdAt": {
                 $lt: new Date(),
                 $gte: new Date(new Date().setDate(new Date().getDate() - 1))
-              }
+              },
+              "status": 'Delivered'
             }
           },
           {

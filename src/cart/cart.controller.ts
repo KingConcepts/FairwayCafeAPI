@@ -263,22 +263,31 @@ class CartController extends RequestBase {
       /** If Items already available in cart */
       if (cart && cart.items.length) {
         itemList = cart.items;
-        /** Removes items from array */
+
         itemList.map((itemDetails, index) => {
           if (JSON.stringify(itemDetails.itemId) == JSON.stringify(req.body.itemId)) {
-            itemList.splice(index, 1);
+            if (req.body.selectedQuantity > 0) {
+              itemDetails.selectedQuantity = req.body.selectedQuantity,
+                itemDetails.categoryId = req.body.categoryId,
+                itemDetails.subPrice = (req.body.selectedQuantity * item.price).toFixed(2),
+                itemDetails.price = Number(item.price).toFixed(2)
+            } else {
+              /** Removes items from array if quantity is zero*/
+              itemList.splice(index, 1);
+            }
           }
+
         });
         /** If quantity is > 0 againg adding item with updated quantity */
-        if (req.body.selectedQuantity > 0) {
-          itemList.push({
-            itemId: req.body.itemId,
-            selectedQuantity: req.body.selectedQuantity,
-            categoryId: req.body.categoryId,
-            subPrice: (req.body.selectedQuantity * item.price).toFixed(2),
-            price: Number(item.price).toFixed(2)
-          });
-        }
+        // if (req.body.selectedQuantity > 0) {
+        //   itemList.push({
+        //     itemId: req.body.itemId,
+        //     selectedQuantity: req.body.selectedQuantity,
+        //     categoryId: req.body.categoryId,
+        //     subPrice: (req.body.selectedQuantity * item.price).toFixed(2),
+        //     price: Number(item.price).toFixed(2)
+        //   });
+        // }
         const ItemListCopy = _.cloneDeep(itemList);
         const data: any = await this.getTotalDetails(ItemListCopy);
         totalQuantity = data.totalQuantity;
