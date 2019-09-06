@@ -278,7 +278,7 @@ class ItemController extends RequestBase {
 
       const resObj: IResponse = {
         res: res,
-        status: 201,
+        status: 200,
         message: 'Item updated Successfully.',
         data: saveQueryParams
       }
