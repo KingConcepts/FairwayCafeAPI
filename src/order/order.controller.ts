@@ -131,6 +131,15 @@ class OrderController extends RequestBase {
         {
           $lookup:
           {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user"
+          }
+        },
+        {
+          $lookup:
+          {
             from: "items",
             localField: "items.itemId",
             foreignField: "_id",
@@ -151,6 +160,11 @@ class OrderController extends RequestBase {
       if (!order.length) {
         return this.sendBadRequest(res, 'Incorrect Order ID');
       }
+
+
+      delete order[0].user[0].password;
+      order[0].user = order[0].user[0];
+
       order[0].categoryList.map((element) => {
         return element.imageURL = element.imageURL ? `${process.env.IMAGE_LOCATION}${element.imageURL}` : process.env.DEFAULT_IMAGE;
       });
@@ -167,6 +181,7 @@ class OrderController extends RequestBase {
           }
         });
       });
+
       delete order[0].itemList;
       delete order[0].categoryList;
 
