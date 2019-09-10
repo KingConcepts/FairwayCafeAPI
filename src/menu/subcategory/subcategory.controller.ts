@@ -266,6 +266,11 @@ class SubcategoryController extends RequestBase {
       }
       const result = await subcategoryModel.findOneAndUpdate({ _id: req.params.id }, saveQueryParams);
 
+      if (req.file && req.file.filename) {
+        /** Deletes Image from server */
+        fileUploads.removeFile(result.imageURL);
+      }
+      
       const resObj: IResponse = {
         res: res,
         status: 201,
@@ -282,12 +287,15 @@ class SubcategoryController extends RequestBase {
   private deleteSubcategory = async (req: express.Request, res: express.Response) => {
     try {
       const items = await itemModel.find({ subcategoryId: req.params.id });
-      console.log('items', items);
+     
       if (items.length) {
         return this.sendBadRequest(res, 'You can not remove Subcategory, Items are still available with this category.');
       }
 
-      await subcategoryModel.remove({ _id: req.params.id });
+      const item = await subcategoryModel.findOneAndRemove({ _id: req.params.id });
+      
+      /** Deletes Image from server */
+      fileUploads.removeFile(item.imageURL);
 
       const resObj: IResponse = {
         res: res,

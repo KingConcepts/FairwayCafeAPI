@@ -164,7 +164,13 @@ class CategoryController extends RequestBase {
       if (req.file && req.file.filename) {
         saveQueryParams.imageURL = req.file.filename;
       }
+
       const result = await categoryModel.findOneAndUpdate({ _id: req.params.id }, saveQueryParams);
+
+      if (req.file && req.file.filename) {
+        /** Deletes Image from server */
+        fileUploads.removeFile(result.imageURL);
+      }
 
       const resObj: IResponse = {
         res: res,
@@ -186,7 +192,10 @@ class CategoryController extends RequestBase {
       if (items.length) {
         return this.sendBadRequest(res, 'You can not remove Category, Subcategories are still available with this category.');
       }
-      await categoryModel.remove({ _id: req.params.id });
+      const item = await categoryModel.findOneAndRemove({ _id: req.params.id });
+
+      /** Deletes Image from server */
+      fileUploads.removeFile(item.imageURL);
 
       const resObj: IResponse = {
         res: res,
@@ -207,7 +216,7 @@ class CategoryController extends RequestBase {
       if (req.query.status && req.query.status !== 'null') {
         queryParams.status = req.query.status;
       }
-      const categories = await categoryModel.find(queryParams, {name: 1});
+      const categories = await categoryModel.find(queryParams, { name: 1 });
 
       const resObj: IResponse = {
         res: res,

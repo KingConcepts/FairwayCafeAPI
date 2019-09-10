@@ -276,6 +276,11 @@ class ItemController extends RequestBase {
       }
       const result = await itemModel.findOneAndUpdate({ _id: req.params.id }, saveQueryParams);
 
+      if (req.file && req.file.filename) {
+        /** Deletes Image from server */
+        fileUploads.removeFile(result.imageURL);
+      }
+
       const resObj: IResponse = {
         res: res,
         status: 200,
@@ -292,7 +297,10 @@ class ItemController extends RequestBase {
   private deleteItem = async (req: express.Request, res: express.Response) => {
     try {
 
-      await itemModel.remove({ _id: req.params.id });
+      const item = await itemModel.findOneAndRemove({ _id: req.params.id });
+      
+      /** Deletes Image from server */
+      fileUploads.removeFile(item.imageURL);
 
       const resObj: IResponse = {
         res: res,

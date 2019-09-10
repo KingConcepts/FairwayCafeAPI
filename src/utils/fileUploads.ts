@@ -1,5 +1,5 @@
 import * as multer from 'multer';
-import { resolve } from 'dns';
+import * as fs from 'fs';
 
 export class FileUploads {
 
@@ -24,6 +24,21 @@ export class FileUploads {
             console.log('uploadFile', e);
         }
 
+    }
+
+    public removeFile(filename) {
+        try {
+            const path = `public/uploads/images/${filename}`;
+            fs.unlink(path, (err) => {
+                if (err) {
+                    console.error(err)
+                    return
+                }
+                console.log('Image Deleted');
+            });
+        } catch (e) {
+            console.log('removeFile', e);
+        }
     }
 
 }
