@@ -423,17 +423,73 @@ class OrderController extends RequestBase {
     });
   }
 
-  genrateOrderCSV = () => {
+  // genrateOrderCSV = () => {
+  //   return new Promise(async (resolve, reject) => {
+  //     try {
+  //       const orderData: any = await this.getAllOrdersToGenerateCSV();
+  //       /** check if order file exist than rename the file */
+  //       const filePath = process.env.ORDER_STORE_PATH + process.env.ORDER_FILE_NAME;
+  //       const renameFilePath =
+  //         process.env.ORDER_STORE_PATH +
+  //         'order_' +
+  //         moment()
+  //           .subtract(1, 'day')
+  //           .format('YYYY_MM_DD')
+  //           .toString() +
+  //         '.csv';
+  //       fs.access(filePath, fs.constants.R_OK, err => {
+  //         /** if error cancel operation and print the error log */
+  //         if (err) {
+  //           console.log('File Exist error :- ', err);
+  //         }
+  //         /** rename the file */
+  //         fs.rename(filePath, renameFilePath, err => {
+  //           /** if error  while renaming the file console error */
+  //           if (err) {
+  //             console.log('File rename error :- ', err);
+  //           }
+  //           /** if file rename create new file and begins write operation */
+  //           let payload = '';
+  //           orderData.map(order => {
+  //             let orderArr = [
+  //               order.companycode,
+  //               order.empNumber,
+  //               order.foodtype, // category name
+  //               order.orderid,
+  //               order.amount,
+  //               order.currency, // $
+  //             ];
+  //             payload += orderArr.join(',') + '\n';
+  //           });
+  //           console.log('Order Payload :- ', payload);
+  //           fs.writeFile(process.env.ORDER_STORE_PATH + process.env.ORDER_FILE_NAME, payload, err => {
+  //             if (err) {
+  //               console.log('Write File error :- ', err);
+  //               reject(err);
+  //             } else {
+  //               console.log('File write success !');
+  //               resolve(true);
+  //             }
+  //           });
+  //         });
+  //       });
+  //     } catch (e) {
+  //       console.log('uploadOrderFiletoFTPServer', e);
+  //       reject(e);
+  //     }
+  //   });
+  // }
+
+  genrateOrderCSVNew = () => {
     return new Promise(async (resolve, reject) => {
       try {
         const orderData: any = await this.getAllOrdersToGenerateCSV();
         /** check if order file exist than rename the file */
-        const filePath = process.env.ORDER_STORE_PATH + process.env.ORDER_FILE_NAME;
-        const renameFilePath =
+        // const filePath = process.env.ORDER_STORE_PATH + process.env.ORDER_FILE_NAME;
+        const filePath =
           process.env.ORDER_STORE_PATH +
           'order_' +
           moment()
-            .subtract(1, 'day')
             .format('YYYY_MM_DD')
             .toString() +
           '.csv';
@@ -442,35 +498,29 @@ class OrderController extends RequestBase {
           if (err) {
             console.log('File Exist error :- ', err);
           }
-          /** rename the file */
-          fs.rename(filePath, renameFilePath, err => {
-            /** if error  while renaming the file console error */
+
+          /** if file rename create new file and begins write operation */
+          let payload = '';
+          orderData.map(order => {
+            let orderArr = [
+              order.companycode,
+              order.empNumber,
+              order.foodtype, // category name
+              order.orderid,
+              order.amount,
+              order.currency, // $
+            ];
+            payload += orderArr.join(',') + '\n';
+          });
+          console.log('Order Payload :- ', payload);
+          fs.writeFile(filePath, payload, err => {
             if (err) {
-              console.log('File rename error :- ', err);
+              console.log('Write File error :- ', err);
+              reject(err);
+            } else {
+              console.log('File write success !');
+              resolve(true);
             }
-            /** if file rename create new file and begins write operation */
-            let payload = '';
-            orderData.map(order => {
-              let orderArr = [
-                order.companycode,
-                order.empNumber,
-                order.foodtype, // category name
-                order.orderid,
-                order.amount,
-                order.currency, // $
-              ];
-              payload += orderArr.join(',') + '\n';
-            });
-            console.log('Order Payload :- ', payload);
-            fs.writeFile(process.env.ORDER_STORE_PATH + process.env.ORDER_FILE_NAME, payload, err => {
-              if (err) {
-                console.log('Write File error :- ', err);
-                reject(err);
-              } else {
-                console.log('File write success !');
-                resolve(true);
-              }
-            });
           });
         });
       } catch (e) {
@@ -520,10 +570,11 @@ class OrderController extends RequestBase {
    */
   private uploadOrderCSV = async (req: express.Request, res: express.Response) => {
     try {
+      let self = this;
       new CronJob(process.env.AD_USER_UPDATE_JOB_TIME, async function () {
         console.log('You will see this message every second');
-        await this.genrateOrderCSV();
-        this.uploadOrder();
+        await self.genrateOrderCSVNew();
+        self.uploadOrder();
       }, null, true, 'America/Los_Angeles');
       const resObj: IResponse = {
         res: res,

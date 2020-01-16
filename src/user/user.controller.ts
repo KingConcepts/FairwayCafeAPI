@@ -227,10 +227,11 @@ class UserController extends RequestBase {
 
   private updateUserFromADJob = async (req: express.Request, res: express.Response) => {
     try {
+      let self = this;
       new CronJob(process.env.AD_USER_UPDATE_JOB_TIME, async function () {
         console.log('You will see this message every second');
-        await this.getUserFromAD();
-        this.updateUserFromAD();
+        await self.getUserFromAD();
+        self.updateUserFromAD();
       }, null, true, 'America/Los_Angeles');
       const resObj: IResponse = {
         res: res,
