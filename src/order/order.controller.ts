@@ -8,12 +8,17 @@ import * as sftp_client from 'ssh2-sftp-client';
 
 import RequestBase from '../response/response.controller';
 import itemModel from '../menu/item/item.model';
+import adminModel from '../admin/admin.model';
 import orderModel from './order.model';
+import userModel from '../user/user.model';
 import authMiddleware from '../middleware/auth.middleware';
 import { IResponse } from '../interfaces/response.interface';
 import IOrder from './order.interface';
 import TaxController from '../settings/tax/tax.controller';
 import adminMiddleware from '../middleware/admin.middleware';
+
+import notification from '../utils/notification';
+import { changeOrderStatus, newOrderForAdmin, newOrderForUser } from '../templates/template';
 
 class OrderController extends RequestBase {
   public path = '/api/order';
@@ -83,6 +88,7 @@ class OrderController extends RequestBase {
       let totalQuantity: any = 0;
 
       const data: any = await this.getOrderDetails(res, req.body.items);
+      // console.log('data', JSON.stringify(data));
       if (!data.items.length) {
         return this.sendBadRequest(res, 'Please Select The Item Quantity.');
       }
@@ -99,6 +105,8 @@ class OrderController extends RequestBase {
         totalTaxAmount: totalTaxAmount.toFixed(2),
         total: (subTotal + totalTaxAmount).toFixed(2),
       };
+
+
       if (saveQueryParams.total != Number(req.body.total)) {
         return this.sendBadRequest(res, 'Price of some item has changed.');
       };
@@ -109,6 +117,33 @@ class OrderController extends RequestBase {
       req.body.items.map(async (item) => {
         await itemModel.findOneAndUpdate({ _id: mongoose.Types.ObjectId(item.itemId) }, { $inc: { quantity: -item.selectedQuantity } });
       });
+
+      /** Email to admin and user */
+      let itemString = '';
+      data.items.map(i => {
+        itemString = itemString + `Item: ${i.itemDetails.name}, Quantity: ${i.itemDetails.quantity}, Price: ${i.itemDetails.price}</br>`
+      });
+
+      itemString = itemString + `Order Number: ${result.orderId}</br> Sub Total: ${saveQueryParams.subTotal}</br>
+       Tax: ${saveQueryParams.tax}%</br> Total: ${saveQueryParams.total}`
+      // console.log('itemString', itemString);
+
+      const adminUser = await adminModel.findOne();
+      const user = await userModel.findOne({ _id: req.user.id });
+      notification.sendEmailNotifications(newOrderForAdmin, {
+        to: adminUser.email,
+        firstName: adminUser.firstName,
+        data: itemString,
+        subject: 'New Order'
+      });
+      // console.log('req.user', req.user);
+      notification.sendEmailNotifications(newOrderForUser, {
+        to: user.email,
+        firstName: user.firstName,
+        data: itemString,
+        subject: 'Invoice - FairwayCafe'
+      });
+
       const resObj: IResponse = {
         res: res,
         status: 200,
@@ -356,8 +391,14 @@ class OrderController extends RequestBase {
 
   private updateOrder = async (req: express.Request, res: express.Response) => {
     try {
-
       const order = await orderModel.findOneAndUpdate({ _id: req.params.id }, { status: req.body.status });
+      const user = await userModel.findOne({ _id: order.userId });
+      notification.sendEmailNotifications(changeOrderStatus, {
+        to: user.email,
+        firstName: user.firstName,
+        status: req.body.status,
+        subject: 'Order Updates'
+      });
       const resObj: IResponse = {
         res: res,
         status: 200,

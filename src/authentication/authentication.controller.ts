@@ -7,6 +7,8 @@ import bycryptOprations from '../utils/bcryptOperations';
 import authentication from '../utils/authentication';
 import RequestBase from '../response/response.controller';
 import CartController from '../cart/cart.controller';
+import notification from '../utils/notification';
+import { userRegister } from '../templates/template';
 
 import {
   IUserData,
@@ -85,6 +87,7 @@ class Authentication extends RequestBase {
           username: req.body.username,
           company: user._doc.email
         };
+        notification.sendEmailNotifications(userRegister, { to: user.email, firstName: user.firstName, subject: 'Welcome to FairwayCafe' });
         const resObj: IResponse = {
           res: res,
           status: 201,

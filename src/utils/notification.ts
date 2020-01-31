@@ -1,8 +1,23 @@
 import * as nodemailer from 'nodemailer';
+import * as _ from 'lodash';
 
 export class Notification {
 
-    public sendEmail() {
+    sendEmailNotifications = (template, templateData = {}) => {
+        const finalTemp = this.getHtmlTemplate(template, templateData);
+        this.sendEmail(finalTemp, templateData);
+    };
+
+    getHtmlTemplate = (template, templateData) => {
+        try {
+            const compiled = _.template(template);
+            return compiled(templateData);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    public sendEmail(template, templateData) {
         return new Promise((resolve, reject) => {
             const smtpConfig = {
                 // service: 'Gmail',
@@ -13,26 +28,25 @@ export class Notification {
                 // },
                 // secure: false,
                 auth: {
-                    user: 'rspl.fe@gmail.com',
-                    pass: 'rspl123#'
+                    user: process.env.EMAIL_USER_ID,
+                    pass: process.env.EMAIL_PASSWORD
                 }
             };
             const transporter = nodemailer.createTransport(smtpConfig);
-
             const mailOptions = {
-                to: 'anjali.pandya@rishabhsoft.com',
-                from: 'rspl.fe@gmail.com',
-                subject: 'Test Mail',
-                text: 'Hello!',
+                to: templateData.to,
+                from: process.env.EMAIL_USER_ID,
+                subject: templateData.subject,
+                html: template,
             };
 
             transporter.sendMail(mailOptions, function (error, info) {
                 if (error) {
-                    console.log('error',error);
-                    // reject(error);
+                    console.log('error', error);
+                    reject(error);
                 } else {
-                    console.log('info',info);
-                    // resolve(info);
+                    console.log('info', info);
+                    resolve(info);
                 }
             });
         });
@@ -40,4 +54,3 @@ export class Notification {
 
 }
 export default new Notification;
-

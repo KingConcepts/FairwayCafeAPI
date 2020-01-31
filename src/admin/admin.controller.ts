@@ -9,6 +9,7 @@ import authentication from '../utils/authentication';
 import TaxController from '../settings/tax/tax.controller';
 import authMiddleware from '../middleware/auth.middleware';
 import notification from '../utils/notification';
+import { adminForgotPassword } from '../templates/template';
 
 class AdminController extends RequestBase {
   public path = '/api/admin';
@@ -119,7 +120,13 @@ class AdminController extends RequestBase {
 
       // const randomPassword = 'fairway@123';
       const randomPassword = authentication.generateRandomString();
-      console.log('randomPassword', randomPassword);
+      // console.log('randomPassword', randomPassword);
+      notification.sendEmailNotifications(adminForgotPassword, {
+        to: user.email,
+        firstName: user.firstName,
+        password: randomPassword,
+        subject: 'forgot Password'
+      });
       const updateParams = {
         password: await bycryptOprations.genratePasswordHash(randomPassword)
       }
@@ -176,9 +183,9 @@ class AdminController extends RequestBase {
       this.sendServerError(res, e.message);
     }
   }
-   
+
   private test = async (req: express.Request, res: express.Response) => {
-    notification.sendEmail();
+    // notification.sendEmailNotifications(sample, {});
     res.send('Ok');
   }
 }
