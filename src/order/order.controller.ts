@@ -58,6 +58,7 @@ class OrderController extends RequestBase {
             console.log('subTotal', subTotal);
             item.price = itemData.price;
             items[index] = item;
+            items[index].itemDetails = itemData
             // items.splice(0, 1);
             index = index + 1;
             resolve(this.getOrderDetails(res, items, totalQuantity, subTotal, index));
