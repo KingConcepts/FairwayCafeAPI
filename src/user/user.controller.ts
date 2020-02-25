@@ -48,7 +48,7 @@ class UserController extends RequestBase {
         await userTokenModel.findOneAndUpdate({ _id: req.body.id }, { status: 'Inactive' });
         const resObj: IResponse = {
           res: res,
-          status: 201,
+          status: 200,
           message: 'Password Changed Successfully',
           data: {}
         }
@@ -69,7 +69,7 @@ class UserController extends RequestBase {
         let failed = [];
         const empCode = ['CGI', 'CGS', 'CGC'];
 
-        payload.map((item = {}) => {
+        payload.map((item: any) => {
           if (item.empNumber !== '' && item.email !== '' && empCode.includes(item.companyCode2.trim())) {
             userModel.updateOne({ empNumber: item.empNumber }, item, { upsert: true }, (err, data) => {
               if (err) {
@@ -118,7 +118,7 @@ class UserController extends RequestBase {
               empType: data.substring(191, 193).trim(),
               filler3: data.substring(193, 198).trim(),
               shift: data.substring(197, 199).trim(),
-              email: data.substring(199, 239).trim(),
+              email: (data.substring(199, 239).trim()).toLowerCase(),
               email2: data.substring(239, 279).trim(),
               supervisorFirstName: data.substring(279, 304).trim(),
               supervisorLastName: data.substring(304, 329).trim(),
@@ -187,17 +187,20 @@ class UserController extends RequestBase {
                       })
                       .catch(err => {
                         console.log('File Download Error ---- ', err);
+                        reject(false)
                       });
                   }
                 }
               })
               .catch(err => {
                 console.log('File List Error ---- ', err);
+                reject(false)
               });
           });
         /** call back on connection end. */
         ftpClient.on('end', () => {
           console.log('FTP CONNECTION CLOSED .......');
+          resolve(true);
         });
 
       } catch (e) {

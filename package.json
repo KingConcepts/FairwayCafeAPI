@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node ./src/server.ts"
+    "dev": "ts-node ./src/server.ts",
+    "start": "node ./build/index.js",
+    "build": "webpack"
   },
   "repository": {
     "type": "git",
@@ -34,7 +36,12 @@
     "nodemailer": "^6.3.0",
     "ssh2-sftp-client": "^2.5.2",
     "swagger-ui-express": "^4.0.7",
+    "ts-loader": "^6.2.1",
     "ts-node": "^8.3.0",
-    "typescript": "^3.5.3"
+    "typescript": "^3.5.3",
+    "webpack": "^4.41.6"
+  },
+  "devDependencies": {
+    "webpack-cli": "^3.3.11"
   }
 }

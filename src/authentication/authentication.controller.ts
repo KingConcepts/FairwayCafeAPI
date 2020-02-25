@@ -33,7 +33,7 @@ class Authentication extends RequestBase {
   private registration = async (req: RequestWithUser, res: express.Response) => {
     try {
       //@TODO .toLowerCase() to email here and also while saving
-      const getQueryParams = { email: req.body.email, empNumber: req.body.empNumber };
+      const getQueryParams = { email: (req.body.email.trim()).toLowerCase(), empNumber: req.body.empNumber.trim() };
 
       const userDetails = {
         'companyCode2': 1,
@@ -69,7 +69,7 @@ class Authentication extends RequestBase {
         const updateParams = {
           isRegistered: true,
           password: await bycryptOprations.genratePasswordHash(req.body.password),
-          username: req.body.username.toLowerCase()
+          username: (req.body.username.trim()).toLowerCase()
         }
         await userModel.updateOne({ _id: user._id }, updateParams);
         const token = await authentication.genratetoken(user._id);
@@ -87,10 +87,10 @@ class Authentication extends RequestBase {
           username: req.body.username,
           company: user._doc.email
         };
-        notification.sendEmailNotifications(userRegister, { to: user.email, firstName: user.firstName, subject: 'Welcome to FairwayCafe' });
+        // notification.sendEmailNotifications(userRegister, { to: user.email, firstName: user.firstName, subject: 'Welcome to FairwayCafe' });
         const resObj: IResponse = {
           res: res,
-          status: 201,
+          status: 200,
           message: 'User Registered Successfully',
           data: {
             user: resData,
@@ -109,6 +109,7 @@ class Authentication extends RequestBase {
 
   private login = async (req: express.Request, res: express.Response) => {
     try {
+      console.log('Login', req.body);
       const getQueryParams = { username: req.body.username.toLowerCase(), isRegistered: true };
       const userDetails = {
         'password': 1,
@@ -122,7 +123,7 @@ class Authentication extends RequestBase {
       }
       const user = await userModel.findOne(getQueryParams, userDetails);
       if (!user) {
-        this.sendNotAuthorized(res);
+        return this.sendNotAuthorized(res);
       }
       if ((user.companyCode2 === 'CGC' || user.companyCode2 === 'CGI' || user.companyCode2 === 'CGS')
         && (user.status === '3')) {
@@ -155,17 +156,18 @@ class Authentication extends RequestBase {
               cart: cartDetails
             }
           }
-          this.send(resObj);
+          console.log('resObj', resObj);
+          return this.send(resObj);
         } else {
-          this.sendNotAuthorized(res);
+          return this.sendNotAuthorized(res);
         }
       } else {
-        this.sendBadRequest(res, 'Invalid user details');
+        return this.sendBadRequest(res, 'Invalid user details');
       }
 
     } catch (e) {
       console.log('login', e);
-      this.sendServerError(res, e.message);
+      return this.sendServerError(res, e.message);
     }
   }
 
@@ -181,7 +183,7 @@ class Authentication extends RequestBase {
         message: 'Loggedout Successfully',
         data: {}
       }
-      this.send(resObj);
+      return this.send(resObj);
     } catch (e) {
       console.log('logout', e);
       this.sendServerError(res, e.message);
