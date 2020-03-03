@@ -6,11 +6,12 @@ import * as sftp_client from 'ssh2-sftp-client';
 import userModel from './user.model';
 import userTokenModel from '../authentication/userToken.model';
 import bycryptOprations from '../utils/bcryptOperations';
-import { IResponse } from 'interfaces/response.interface';
+import { IResponse } from '../interfaces/response.interface';
 import RequestBase from '../response/response.controller';
 import authentication from '../utils/authentication';
 // import notification from '../utils/notification';
 // import cron from '../utils/cronJob';
+require("@aws-sdk/eventstream-marshaller");
 
 const activeDirectoryFile = 'AD/AD.txt';
 

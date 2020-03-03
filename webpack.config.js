@@ -1,4 +1,5 @@
 const path = require('path');
+const nodeExternals = require('webpack-node-externals');
 // const webpack = require('webpack');
 // const ejsBuilder = require('ejs-webpack-builder');
 const {
@@ -9,6 +10,7 @@ module.exports = {
     entry: './src/server.ts',
     mode: NODE_ENV,
     target: 'node',
+    externals: [nodeExternals()],
     output: {
         path: path.resolve(__dirname, 'build'),
         filename: 'index.js'

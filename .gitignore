@@ -36,6 +36,10 @@ build/Release
 node_modules/
 jspm_packages/
 dist/
+build/
+public/
+AD/
+Orders/
 
 # TypeScript v1 declaration files
 typings/
@@ -60,3 +64,6 @@ typings/
 
 # next.js build output
 .next
+
+# vscode
+.vscode/

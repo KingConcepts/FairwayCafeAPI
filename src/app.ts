@@ -2,11 +2,11 @@ import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import * as mongoose from 'mongoose';
 import * as cors from 'cors';
-import * as swaggerUi from 'swagger-ui-express';
+// import * as swaggerUi from 'swagger-ui-express';
 
 // import swaggerDocument from './swagger.json';
-const swaggerDocument = require('./swagger.json');
-import errorMiddleware from './middleware/error.middleware';
+// const swaggerDocument = require('./swagger.json');
+// import errorMiddleware from './middleware/error.middleware';
 
 class App {
   public app: express.Application;
@@ -20,14 +20,14 @@ class App {
 
     this.connectToTheDatabase();
     this.initializeMiddlewares();
-    this.initializeErrorHandling();
+    // this.initializeErrorHandling();
     this.initializeControllers(controllers);
   }
 
   private initializeMiddlewares() {
     this.app.use(cors('*'));
     this.app.use(bodyParser.json());
-    this.app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+    // this.app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
     this.app.use('/', express.static('public'));
   }
 
@@ -37,13 +37,14 @@ class App {
     });
   }
 
-  private initializeErrorHandling() {
-    this.app.use(errorMiddleware);
-  }
+  // private initializeErrorHandling() {
+  //   this.app.use(errorMiddleware);
+  // }
 
   private connectToTheDatabase() {
     mongoose.connect(process.env.DB_STRING, {
-      useNewUrlParser: true
+      useNewUrlParser: true,
+      useUnifiedTopology: true
     });
   }
   public listen() {

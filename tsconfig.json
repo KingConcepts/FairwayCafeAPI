@@ -1,14 +1,14 @@
 {
     "compilerOptions": {
-        "sourceMap": true,
-        "target": "es2017",
-        "outDir": "./dist",
-        "baseUrl": "./src",
-        "resolveJsonModule": true,
+        "sourceMap": true
+        // "target": "es2017",
+        // "outDir": "./dist",
+        // "baseUrl": "./src"
+        // "resolveJsonModule": true
         // "esModuleInterop": true
     },
     "include": [
-        "src/**/*.ts"
+        "src/**/*.ts", "src/server.ts"
     ],
     "exclude": [
         "node_modules"

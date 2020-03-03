@@ -3,7 +3,7 @@ import * as express from 'express';
 import adminModel from './admin.model';
 import userTokenModel from '../authentication/userToken.model';
 import bycryptOprations from '../utils/bcryptOperations';
-import { IResponse } from 'interfaces/response.interface';
+import { IResponse } from '../interfaces/response.interface';
 import RequestBase from '../response/response.controller';
 import authentication from '../utils/authentication';
 import TaxController from '../settings/tax/tax.controller';
@@ -185,8 +185,10 @@ class AdminController extends RequestBase {
   }
 
   private test = async (req: express.Request, res: express.Response) => {
-    // notification.sendEmailNotifications(sample, {});
-    res.send('Ok');
+    // notification.sendEmailNotifications(adminForgotPassword, {});
+    notification.sendEmail(adminForgotPassword, {});
+    
+    res.send('hello');
   }
 }
 

@@ -35,13 +35,13 @@
     "multer": "^1.4.2",
     "nodemailer": "^6.3.0",
     "ssh2-sftp-client": "^2.5.2",
-    "swagger-ui-express": "^4.0.7",
-    "ts-loader": "^6.2.1",
     "ts-node": "^8.3.0",
-    "typescript": "^3.5.3",
-    "webpack": "^4.41.6"
+    "typescript": "^3.5.3"
   },
   "devDependencies": {
-    "webpack-cli": "^3.3.11"
+    "ts-loader": "^6.2.1",
+    "webpack": "^4.41.6",
+    "webpack-cli": "^3.3.11",
+    "webpack-node-externals": "^1.7.2"
   }
 }

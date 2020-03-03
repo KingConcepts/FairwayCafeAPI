@@ -20,13 +20,14 @@ export class Notification {
     public sendEmail(template, templateData) {
         return new Promise((resolve, reject) => {
             const smtpConfig = {
-                // service: 'Gmail',
-                host: 'smtp.gmail.com',
-                // port: 587,
-                // tls: {
-                //     ciphers: 'SSLv3'
-                // },
-                // secure: false,
+                // host: 'smtp.gmail.com',
+                host: 'smtp.office365.com',
+                secureConnection: false,
+                port: 587,
+                tls: {
+                    ciphers: 'SSLv3',
+                },
+
                 auth: {
                     user: process.env.EMAIL_USER_ID,
                     pass: process.env.EMAIL_PASSWORD
