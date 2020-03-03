@@ -44,7 +44,8 @@ class App {
   private connectToTheDatabase() {
     mongoose.connect(process.env.DB_STRING, {
       useNewUrlParser: true,
-      useUnifiedTopology: true
+      useUnifiedTopology: true,
+      useCreateIndex: true
     });
   }
   public listen() {
