@@ -87,7 +87,7 @@ class Authentication extends RequestBase {
           username: req.body.username,
           company: user._doc.email
         };
-        // notification.sendEmailNotifications(userRegister, { to: user.email, firstName: user.firstName, subject: 'Welcome to FairwayCafe' });
+        notification.sendEmailNotifications(userRegister, { to: user.email, firstName: user.firstName, subject: 'Welcome to FairwayCafe' });
         const resObj: IResponse = {
           res: res,
           status: 200,

@@ -25,13 +25,12 @@ export class Notification {
 		tls: {
         		rejectUnauthorized: false
     		},
-                //auth: {
-                    //user: process.env.EMAIL_USER_ID,
-                    //pass: process.env.EMAIL_PASSWORD
-                //}
+                auth: {
+                    user: process.env.EMAIL_USER_ID,
+                    pass: process.env.EMAIL_PASSWORD
+                }
             };
             const transporter = nodemailer.createTransport(smtpConfig);
-		console.log('template', template);
             const mailOptions = {
                 to: templateData.to,
                 from: process.env.EMAIL_USER_ID,

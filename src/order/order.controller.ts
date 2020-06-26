@@ -122,11 +122,11 @@ class OrderController extends RequestBase {
       /** Email to admin and user */
       let itemString = '';
       data.items.map(i => {
-        itemString = itemString + `Item: ${i.itemDetails.name}, Quantity: ${i.itemDetails.quantity}, Price: ${i.itemDetails.price}</br>`
+        itemString = itemString + `Item: ${i.itemDetails.name}, Quantity: ${i.itemDetails.quantity}, Price: ${i.itemDetails.price}<br/>`
       });
 
-      itemString = itemString + `Order Number: ${result.orderId}</br> Sub Total: ${saveQueryParams.subTotal}</br>
-       Tax: ${saveQueryParams.tax}%</br> Total: ${saveQueryParams.total}`
+      itemString = itemString + `Order Number: ${result.orderId}<br/> Sub Total: ${saveQueryParams.subTotal}<br/>
+       Tax: ${saveQueryParams.tax}%<br/> Total: ${saveQueryParams.total}`
       // console.log('itemString', itemString);
 
       const adminUser = await adminModel.findOne();
